@@ -3,9 +3,11 @@ package com.example.buddyfinder_backend.service;
 import com.example.buddyfinder_backend.dto.UserResponse;
 import com.example.buddyfinder_backend.entity.Likes;
 import com.example.buddyfinder_backend.entity.Match;
+import com.example.buddyfinder_backend.entity.Profile;
 import com.example.buddyfinder_backend.entity.User;
 import com.example.buddyfinder_backend.repository.LikesRepository;
 import com.example.buddyfinder_backend.repository.MatchRepository;
+import com.example.buddyfinder_backend.repository.ProfileRepository;
 import com.example.buddyfinder_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ public class MatchService {
     private final LikesRepository likesRepository;
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
+    private final ProfileRepository profileRepository; // ✅ ADD THIS
 
     public String likeUser(Long fromUserId, Long toUserId) {
         // Check if already liked
@@ -80,7 +83,7 @@ public class MatchService {
                     ? match.getUser2()
                     : match.getUser1();
 
-            matchedUsers.add(mapToUserResponse(matchedUser));
+            matchedUsers.add(mapToUserResponseWithPhotos(matchedUser)); // ✅ CHANGED
         }
 
         return matchedUsers;
@@ -106,6 +109,10 @@ public class MatchService {
             matchDetails.put("bio", matchedUser.getBio());
             matchDetails.put("fitnessLevel", matchedUser.getFitnessLevel());
             matchDetails.put("matchedAt", match.getMatchedAt());
+
+            // ✅ ADD PHOTOS
+            Optional<Profile> profile = profileRepository.findByUser_UserId(matchedUser.getUserId());
+            profile.ifPresent(p -> matchDetails.put("photos", p.getPhotos()));
 
             return matchDetails;
         }).collect(Collectors.toList());
@@ -151,8 +158,9 @@ public class MatchService {
         return Math.min(score, 100f);
     }
 
-    private UserResponse mapToUserResponse(User user) {
-        return UserResponse.builder()
+    // Includes photos
+    private UserResponse mapToUserResponseWithPhotos(User user) {
+        UserResponse.UserResponseBuilder builder = UserResponse.builder()
                 .userId(user.getUserId())
                 .name(user.getName())
                 .email(user.getEmail())
@@ -167,7 +175,17 @@ public class MatchService {
                 .mbtiType(user.getMbtiType())
                 .fitnessLevel(user.getFitnessLevel())
                 .isVerified(user.getIsVerified())
-                .isAdmin(user.getIsAdmin())
-                .build();
+                .isAdmin(user.getIsAdmin());
+
+        // Add photos from profile
+        Optional<Profile> profile = profileRepository.findByUser_UserId(user.getUserId());
+        profile.ifPresent(p -> builder.photos(p.getPhotos()));
+
+        return builder.build();
+    }
+
+    // Keep old method for backward compatibility
+    private UserResponse mapToUserResponse(User user) {
+        return mapToUserResponseWithPhotos(user);
     }
 }

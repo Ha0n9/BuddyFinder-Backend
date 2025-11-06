@@ -25,4 +25,5 @@ public class UserResponse {
     private String fitnessLevel;
     private Boolean isVerified;
     private Boolean isAdmin;
+    private String photos;
 }
