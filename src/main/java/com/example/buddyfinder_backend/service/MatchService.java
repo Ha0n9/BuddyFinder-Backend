@@ -10,9 +10,7 @@ import com.example.buddyfinder_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,7 +46,8 @@ public class MatchService {
 
         if (mutualLike.isPresent()) {
             // Create match
-            createMatch(fromUser, toUser);
+            Match match = createMatch(fromUser, toUser);
+            System.out.println("✅ Match created with ID: " + match.getMatchId());
             return "It's a match! 🎉";
         }
 
@@ -87,20 +86,47 @@ public class MatchService {
         return matchedUsers;
     }
 
-    private void createMatch(User user1, User user2) {
+    public List<Map<String, Object>> getMatchesWithDetails(Long userId) {
+        List<Match> matches = matchRepository.findActiveMatchesByUserId(userId);
+
+        return matches.stream().map(match -> {
+            User matchedUser = match.getUser1().getUserId().equals(userId)
+                    ? match.getUser2()
+                    : match.getUser1();
+
+            Map<String, Object> matchDetails = new HashMap<>();
+            matchDetails.put("matchId", match.getMatchId());
+            matchDetails.put("userId", matchedUser.getUserId());
+            matchDetails.put("name", matchedUser.getName());
+            matchDetails.put("email", matchedUser.getEmail());
+            matchDetails.put("age", matchedUser.getAge());
+            matchDetails.put("gender", matchedUser.getGender());
+            matchDetails.put("interests", matchedUser.getInterests());
+            matchDetails.put("location", matchedUser.getLocation());
+            matchDetails.put("bio", matchedUser.getBio());
+            matchDetails.put("fitnessLevel", matchedUser.getFitnessLevel());
+            matchDetails.put("matchedAt", match.getMatchedAt());
+
+            return matchDetails;
+        }).collect(Collectors.toList());
+    }
+
+    private Match createMatch(User user1, User user2) {
         // Check if match already exists
         Optional<Match> existingMatch = matchRepository.findMatchBetweenUsers(user1.getUserId(), user2.getUserId());
 
-        if (existingMatch.isEmpty()) {
-            Match match = Match.builder()
-                    .user1(user1)
-                    .user2(user2)
-                    .status(Match.MatchStatus.ACTIVE)
-                    .compatibilityScore(calculateCompatibility(user1, user2))
-                    .build();
-
-            matchRepository.save(match);
+        if (existingMatch.isPresent()) {
+            return existingMatch.get();
         }
+
+        Match match = Match.builder()
+                .user1(user1)
+                .user2(user2)
+                .status(Match.MatchStatus.ACTIVE)
+                .compatibilityScore(calculateCompatibility(user1, user2))
+                .build();
+
+        return matchRepository.save(match);
     }
 
     private Float calculateCompatibility(User user1, User user2) {

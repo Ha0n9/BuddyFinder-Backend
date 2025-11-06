@@ -44,8 +44,12 @@ public class ChatController {
 
         ChatMessage message = messageService.sendMessage(matchId, userId, content);
 
-        // Broadcast via WebSocket
-        messagingTemplate.convertAndSend("/topic/match/" + matchId, message);
+        // Broadcast via WebSocket (if connected)
+        try {
+            messagingTemplate.convertAndSend("/topic/match/" + matchId, message);
+        } catch (Exception e) {
+            System.err.println("WebSocket broadcast failed: " + e.getMessage());
+        }
 
         return ResponseEntity.ok(message);
     }

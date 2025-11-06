@@ -1,5 +1,6 @@
 package com.example.buddyfinder_backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -22,10 +23,12 @@ public class Match {
 
     @ManyToOne
     @JoinColumn(name = "user1_id", nullable = false)
+    @JsonIgnoreProperties({"password", "likesGiven", "likesReceived", "matchesAsUser1", "matchesAsUser2", "messagesSent", "ratingsGiven", "ratingsReceived", "activitiesCreated"})
     private User user1;
 
     @ManyToOne
     @JoinColumn(name = "user2_id", nullable = false)
+    @JsonIgnoreProperties({"password", "likesGiven", "likesReceived", "matchesAsUser1", "matchesAsUser2", "messagesSent", "ratingsGiven", "ratingsReceived", "activitiesCreated"})
     private User user2;
 
     @CreationTimestamp

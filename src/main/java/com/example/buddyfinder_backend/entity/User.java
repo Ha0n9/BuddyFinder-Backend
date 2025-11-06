@@ -1,5 +1,6 @@
 package com.example.buddyfinder_backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -75,34 +76,40 @@ public class User {
     @Column(nullable = false)
     private Boolean isAdmin = false;
 
+    // FIX: Add @JsonIgnoreProperties to ALL relationships
     @OneToMany(mappedBy = "fromUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"fromUser", "toUser"})
     private List<Likes> likesGiven;
 
     @OneToMany(mappedBy = "toUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"fromUser", "toUser"})
     private List<Likes> likesReceived;
 
     @OneToMany(mappedBy = "user1", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"user1", "user2"})
     private List<Match> matchesAsUser1;
 
     @OneToMany(mappedBy = "user2", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"user1", "user2"})
     private List<Match> matchesAsUser2;
 
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"sender", "receiver", "match"})
     private List<Message> messagesSent;
 
     @OneToMany(mappedBy = "fromUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"fromUser", "toUser"})
     private List<Rating> ratingsGiven;
 
     @OneToMany(mappedBy = "toUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"fromUser", "toUser"})
     private List<Rating> ratingsReceived;
 
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"creator"})
     private List<Activity> activitiesCreated;
 
     public enum TierType {
         FREE, PREMIUM, ELITE
     }
 }
-
-
-
