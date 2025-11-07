@@ -8,6 +8,7 @@ import com.example.buddyfinder_backend.repository.ActivityRepository;
 import com.example.buddyfinder_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -69,6 +70,11 @@ public class ActivityService {
         activityRepository.save(activity);
     }
 
+    /**
+     * FIX: Delete activity with proper cascade handling
+     * Delete all participants first, then delete the activity
+     */
+    @Transactional
     public void deleteActivity(Long activityId, Long userId) {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> new RuntimeException("Activity not found"));
@@ -78,6 +84,15 @@ public class ActivityService {
             throw new RuntimeException("You can only delete your own activities");
         }
 
+        // Step 1: Delete all participants first
+        List<ActivityParticipant> participants = participantRepository.findByActivity_ActivityId(activityId);
+        if (!participants.isEmpty()) {
+            participantRepository.deleteAll(participants);
+            System.out.println("✅ Deleted " + participants.size() + " participants");
+        }
+
+        // Step 2: Now delete the activity
         activityRepository.delete(activity);
+        System.out.println("✅ Activity deleted successfully");
     }
 }

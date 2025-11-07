@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "activities")
@@ -20,8 +21,13 @@ public class Activity {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "creator_id", nullable = false)
-    @JsonIgnoreProperties({"password", "likesGiven", "likesReceived", "matches", "sentMessages", "receivedMessages"}) // ✅ FIX
+    @JsonIgnoreProperties({"password", "likesGiven", "likesReceived", "matches", "sentMessages", "receivedMessages"})
     private User creator;
+
+    // ADD: Relationship with participants for cascade delete
+    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"activity", "user"})
+    private List<ActivityParticipant> participants;
 
     @Column(nullable = false)
     private String title;
