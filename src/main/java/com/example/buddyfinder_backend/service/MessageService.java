@@ -8,6 +8,7 @@ import com.example.buddyfinder_backend.repository.MatchRepository;
 import com.example.buddyfinder_backend.repository.MessageRepository;
 import com.example.buddyfinder_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MessageService {
 
     private final MessageRepository messageRepository;
@@ -23,6 +25,8 @@ public class MessageService {
     private final UserRepository userRepository;
 
     public ChatMessage sendMessage(Long matchId, Long senderId, String content) {
+        log.info("💬 Sending message - Match: {}, Sender: {}, Content: {}", matchId, senderId, content);
+
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new RuntimeException("Match not found"));
 
@@ -35,6 +39,7 @@ public class MessageService {
             throw new RuntimeException("Unauthorized to send message to this match");
         }
 
+        // Create and save message
         Message message = Message.builder()
                 .match(match)
                 .sender(sender)
@@ -45,12 +50,17 @@ public class MessageService {
                 .build();
 
         Message savedMessage = messageRepository.save(message);
+        log.info("✅ Message saved with ID: {}", savedMessage.getMessageId());
 
         // Update last message time in match
         match.setLastMessageAt(LocalDateTime.now());
         matchRepository.save(match);
 
-        return mapToChatMessage(savedMessage);
+        // ✅ FIX: Return complete ChatMessage DTO
+        ChatMessage chatMessage = mapToChatMessage(savedMessage);
+        log.info("📤 Returning ChatMessage: {}", chatMessage);
+
+        return chatMessage;
     }
 
     public List<ChatMessage> getMessagesByMatch(Long matchId, Long userId) {
@@ -64,6 +74,7 @@ public class MessageService {
         }
 
         List<Message> messages = messageRepository.findByMatch_MatchIdOrderByTimestampAsc(matchId);
+        log.info("📬 Retrieved {} messages for match {}", messages.size(), matchId);
 
         // Mark messages as read for this user
         messages.stream()
@@ -85,7 +96,8 @@ public class MessageService {
     }
 
     private ChatMessage mapToChatMessage(Message message) {
-        return ChatMessage.builder()
+        // ✅ FIX: Ensure all fields are populated
+        ChatMessage chatMessage = ChatMessage.builder()
                 .messageId(message.getMessageId())
                 .matchId(message.getMatch().getMatchId())
                 .senderId(message.getSender().getUserId())
@@ -96,5 +108,8 @@ public class MessageService {
                 .timestamp(message.getTimestamp())
                 .isRead(message.getIsRead())
                 .build();
+
+        log.debug("🔄 Mapped Message {} to ChatMessage", message.getMessageId());
+        return chatMessage;
     }
 }
