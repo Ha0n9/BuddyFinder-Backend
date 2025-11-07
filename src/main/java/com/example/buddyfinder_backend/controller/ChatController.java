@@ -1,3 +1,4 @@
+// src/main/java/com/example/buddyfinder_backend/controller/ChatController.java
 package com.example.buddyfinder_backend.controller;
 
 import com.example.buddyfinder_backend.dto.ChatMessage;
@@ -5,10 +6,6 @@ import com.example.buddyfinder_backend.security.JwtUtil;
 import com.example.buddyfinder_backend.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +19,6 @@ public class ChatController {
 
     private final MessageService messageService;
     private final JwtUtil jwtUtil;
-    private final SimpMessagingTemplate messagingTemplate;
 
     @GetMapping("/messages/{matchId}")
     public ResponseEntity<List<ChatMessage>> getMessages(
@@ -44,29 +40,7 @@ public class ChatController {
 
         ChatMessage message = messageService.sendMessage(matchId, userId, content);
 
-        // Broadcast via WebSocket (if connected)
-        try {
-            messagingTemplate.convertAndSend("/topic/match/" + matchId, message);
-        } catch (Exception e) {
-            System.err.println("WebSocket broadcast failed: " + e.getMessage());
-        }
-
         return ResponseEntity.ok(message);
-    }
-
-    // WebSocket handler
-    @MessageMapping("/chat/{matchId}")
-    public void handleChatMessage(
-            @DestinationVariable Long matchId,
-            @Payload Map<String, Object> payload) {
-
-        Long senderId = Long.valueOf(payload.get("senderId").toString());
-        String content = (String) payload.get("content");
-
-        ChatMessage message = messageService.sendMessage(matchId, senderId, content);
-
-        // Broadcast to match subscribers
-        messagingTemplate.convertAndSend("/topic/match/" + matchId, message);
     }
 
     @GetMapping("/unread/{matchId}")
