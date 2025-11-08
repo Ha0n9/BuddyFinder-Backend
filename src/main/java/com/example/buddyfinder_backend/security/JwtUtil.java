@@ -21,14 +21,25 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(String email, Long userId) {
+    /**
+     * Generate token with userId and isAdmin
+     */
+    public String generateToken(String email, Long userId, Boolean isAdmin) {
         return Jwts.builder()
                 .setSubject(email)
                 .claim("userId", userId)
+                .claim("isAdmin", isAdmin != null ? isAdmin : false)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    /**
+     * Backward compatibility: Generate token without isAdmin (defaults to false)
+     */
+    public String generateToken(String email, Long userId) {
+        return generateToken(email, userId, false);
     }
 
     public String extractEmail(String token) {
@@ -37,6 +48,18 @@ public class JwtUtil {
 
     public Long extractUserId(String token) {
         return extractClaims(token).get("userId", Long.class);
+    }
+
+    /**
+     * ✅ NEW: Extract isAdmin from token
+     */
+    public Boolean extractIsAdmin(String token) {
+        try {
+            Boolean isAdmin = extractClaims(token).get("isAdmin", Boolean.class);
+            return isAdmin != null ? isAdmin : false;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public Boolean validateToken(String token, String email) {

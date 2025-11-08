@@ -41,10 +41,12 @@ public class Message {
     private LocalDateTime timestamp;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean isRead = false;
 
     private LocalDateTime readAt;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean isDeleted = false;
 }

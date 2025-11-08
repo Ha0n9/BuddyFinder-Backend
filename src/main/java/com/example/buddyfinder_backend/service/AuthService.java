@@ -37,13 +37,17 @@ public class AuthService {
                 .tier(User.TierType.FREE)
                 .isActive(true)
                 .isVerified(false)
-                .isAdmin(false)
+                .isAdmin(false)  // New users are not admin by default
                 .build();
 
         User savedUser = userRepository.save(user);
 
-        // Generate JWT token
-        String token = jwtUtil.generateToken(savedUser.getEmail(), savedUser.getUserId());
+        // UPDATED: Generate JWT token with isAdmin flag
+        String token = jwtUtil.generateToken(
+                savedUser.getEmail(),
+                savedUser.getUserId(),
+                savedUser.getIsAdmin()
+        );
 
         return new AuthResponse(token, mapToUserResponse(savedUser));
     }
@@ -61,8 +65,12 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Generate JWT token
-        String token = jwtUtil.generateToken(user.getEmail(), user.getUserId());
+        // UPDATED: Generate JWT token with isAdmin flag
+        String token = jwtUtil.generateToken(
+                user.getEmail(),
+                user.getUserId(),
+                user.getIsAdmin()
+        );
 
         return new AuthResponse(token, mapToUserResponse(user));
     }

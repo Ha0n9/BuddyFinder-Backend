@@ -22,7 +22,8 @@ public class MatchService {
     private final LikesRepository likesRepository;
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
-    private final ProfileRepository profileRepository; // ✅ ADD THIS
+    private final ProfileRepository profileRepository;
+    private final NotificationService notificationService;
 
     public String likeUser(Long fromUserId, Long toUserId) {
         // Check if already liked
@@ -50,6 +51,15 @@ public class MatchService {
         if (mutualLike.isPresent()) {
             // Create match
             Match match = createMatch(fromUser, toUser);
+            notificationService.notifyMatch(
+                    fromUserId,
+                    match.getMatchId(),
+                    toUser.getName());
+            notificationService.notifyMatch(
+                    toUserId,
+                    match.getMatchId(),
+                    fromUser.getName()
+            );
             System.out.println("✅ Match created with ID: " + match.getMatchId());
             return "It's a match! 🎉";
         }

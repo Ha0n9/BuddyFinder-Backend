@@ -23,44 +23,70 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
+    // COMMENT OUT for now to avoid dependency issues
+    // private final NotificationService notificationService;
 
     public ChatMessage sendMessage(Long matchId, Long senderId, String content) {
-        log.info("💬 Sending message - Match: {}, Sender: {}, Content: {}", matchId, senderId, content);
+        log.info("💬 MessageService.sendMessage called");
+        log.info("   matchId: {}, senderId: {}, content: '{}'", matchId, senderId, content);
 
-        Match match = matchRepository.findById(matchId)
-                .orElseThrow(() -> new RuntimeException("Match not found"));
+        try {
+            log.info("🔍 Finding match...");
+            Match match = matchRepository.findById(matchId)
+                    .orElseThrow(() -> new RuntimeException("Match not found"));
+            log.info("✅ Match found: {}", match.getMatchId());
 
-        User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            log.info("🔍 Finding sender...");
+            User sender = userRepository.findById(senderId)
+                    .orElseThrow(() -> new RuntimeException("Sender not found"));
+            log.info("✅ Sender found: {}", sender.getName());
 
-        // Verify sender is part of the match
-        if (!match.getUser1().getUserId().equals(senderId) &&
-                !match.getUser2().getUserId().equals(senderId)) {
-            throw new RuntimeException("Unauthorized to send message to this match");
+            // Determine receiver
+            User receiver = match.getUser1().getUserId().equals(senderId)
+                    ? match.getUser2()
+                    : match.getUser1();
+            log.info("📮 Receiver: {}", receiver.getName());
+
+            // Save message
+            log.info("💾 Building message entity...");
+            Message message = Message.builder()
+                    .match(match)
+                    .sender(sender)
+                    .content(content)
+                    .isRead(false)
+                    .isDeleted(false)
+                    .build();
+
+            log.info("💾 Saving to database...");
+            Message savedMessage = messageRepository.save(message);
+            log.info("✅ Message saved with ID: {}", savedMessage.getMessageId());
+
+            // ⚠️ TEMPORARILY DISABLED: Notification
+            // This might be causing the exception!
+            /*
+            try {
+                notificationService.notifyNewMessage(
+                        receiver.getUserId(),
+                        matchId,
+                        sender.getName()
+                );
+                log.info("✅ Notification sent");
+            } catch (Exception e) {
+                log.error("⚠️ Failed to send notification (non-critical): {}", e.getMessage());
+                // Don't throw - notification failure shouldn't break message sending
+            }
+            */
+
+            log.info("🔄 Mapping to ChatMessage DTO...");
+            ChatMessage chatMessage = mapToChatMessage(savedMessage);
+            log.info("✅ ChatMessage created: {}", chatMessage);
+
+            return chatMessage;
+
+        } catch (Exception e) {
+            log.error("❌ Error in MessageService.sendMessage:", e);
+            throw e;
         }
-
-        // Create and save message
-        Message message = Message.builder()
-                .match(match)
-                .sender(sender)
-                .content(content)
-                .timestamp(LocalDateTime.now())
-                .isRead(false)
-                .isDeleted(false)
-                .build();
-
-        Message savedMessage = messageRepository.save(message);
-        log.info("✅ Message saved with ID: {}", savedMessage.getMessageId());
-
-        // Update last message time in match
-        match.setLastMessageAt(LocalDateTime.now());
-        matchRepository.save(match);
-
-        // ✅ FIX: Return complete ChatMessage DTO
-        ChatMessage chatMessage = mapToChatMessage(savedMessage);
-        log.info("📤 Returning ChatMessage: {}", chatMessage);
-
-        return chatMessage;
     }
 
     public List<ChatMessage> getMessagesByMatch(Long matchId, Long userId) {
@@ -96,7 +122,8 @@ public class MessageService {
     }
 
     private ChatMessage mapToChatMessage(Message message) {
-        // ✅ FIX: Ensure all fields are populated
+        log.debug("🔄 Mapping Message ID {} to ChatMessage", message.getMessageId());
+
         ChatMessage chatMessage = ChatMessage.builder()
                 .messageId(message.getMessageId())
                 .matchId(message.getMatch().getMatchId())
@@ -109,7 +136,7 @@ public class MessageService {
                 .isRead(message.getIsRead())
                 .build();
 
-        log.debug("🔄 Mapped Message {} to ChatMessage", message.getMessageId());
+        log.debug("✅ Mapped to ChatMessage: {}", chatMessage);
         return chatMessage;
     }
 }
