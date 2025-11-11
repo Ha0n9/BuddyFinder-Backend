@@ -29,4 +29,7 @@ public class RegisterRequest {
 
     @NotBlank(message = "Availability is required")
     private String availability;
+
+    // Referral code
+    private String referralCode;
 }

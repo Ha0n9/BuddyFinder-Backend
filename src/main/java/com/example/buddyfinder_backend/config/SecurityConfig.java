@@ -42,10 +42,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        // ✅ FIX: Allow WebSocket endpoints
+                        .requestMatchers("/api/referral/validate/**").permitAll()
+                        // ✅ Allow WebSocket endpoints
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/app/**").permitAll()
                         .requestMatchers("/topic/**").permitAll()
+                        // ✅ NEW: Allow verification endpoints (authenticated users only)
+                        .requestMatchers("/api/referral/**").authenticated()
+                        .requestMatchers("/api/verification/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
