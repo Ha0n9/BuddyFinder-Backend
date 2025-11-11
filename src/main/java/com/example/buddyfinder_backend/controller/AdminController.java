@@ -80,6 +80,48 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("message", "Activity deleted successfully"));
     }
 
+    // ============ REFUND MANAGEMENT ============
+
+    @GetMapping("/refunds")
+    public ResponseEntity<List<Map<String, Object>>> getAllRefunds(
+            @RequestHeader("Authorization") String authHeader) {
+
+        Long adminId = extractUserIdFromToken(authHeader);
+        return ResponseEntity.ok(adminService.getAllRefunds(adminId));
+    }
+
+    @GetMapping("/refunds/pending")
+    public ResponseEntity<List<Map<String, Object>>> getPendingRefunds(
+            @RequestHeader("Authorization") String authHeader) {
+
+        Long adminId = extractUserIdFromToken(authHeader);
+        return ResponseEntity.ok(adminService.getPendingRefunds(adminId));
+    }
+
+    @PutMapping("/refunds/{refundId}/approve")
+    public ResponseEntity<Map<String, String>> approveRefund(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long refundId,
+            @RequestBody(required = false) Map<String, String> notes) {
+
+        Long adminId = extractUserIdFromToken(authHeader);
+        String adminNotes = notes != null ? notes.get("adminNotes") : null;
+        adminService.approveRefund(refundId, adminId, adminNotes);
+        return ResponseEntity.ok(Map.of("message", "Refund approved successfully"));
+    }
+
+    @PutMapping("/refunds/{refundId}/reject")
+    public ResponseEntity<Map<String, String>> rejectRefund(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long refundId,
+            @RequestBody(required = false) Map<String, String> notes) {
+
+        Long adminId = extractUserIdFromToken(authHeader);
+        String adminNotes = notes != null ? notes.get("adminNotes") : null;
+        adminService.rejectRefund(refundId, adminId, adminNotes);
+        return ResponseEntity.ok(Map.of("message", "Refund rejected successfully"));
+    }
+
     private Long extractUserIdFromToken(String authHeader) {
         String token = authHeader.substring(7);
         return jwtUtil.extractUserId(token);
