@@ -65,6 +65,10 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (Boolean.FALSE.equals(user.getIsActive())) {
+            throw new RuntimeException("Your account has been banned. Please contact support.");
+        }
+
         // UPDATED: Generate JWT token with isAdmin flag
         String token = jwtUtil.generateToken(
                 user.getEmail(),
