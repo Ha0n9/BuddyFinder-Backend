@@ -34,4 +34,8 @@ public interface ReferralRepository extends JpaRepository<Referral, Long> {
 
     // Check if email already invited by this referrer
     boolean existsByReferrer_UserIdAndReferredEmail(Long referrerId, String referredEmail);
+
+    // === 🆕 DELETE METHODS FOR GDPR COMPLIANCE ===
+    void deleteByReferrer_UserId(Long referrerId);
+    void deleteByReferee_UserId(Long refereeId);
 }

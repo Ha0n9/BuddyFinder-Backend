@@ -10,4 +10,7 @@ import java.util.Optional;
 public interface LikesRepository extends JpaRepository<Likes, Long> {
     Optional<Likes> findByFromUser_UserIdAndToUser_UserId(Long fromUserId, Long toUserId);
     Boolean existsByFromUser_UserIdAndToUser_UserId(Long fromUserId, Long toUserId);
+
+    // === 🆕 DELETE METHOD FOR GDPR COMPLIANCE ===
+    void deleteByFromUser_UserIdOrToUser_UserId(Long fromUserId, Long toUserId);
 }

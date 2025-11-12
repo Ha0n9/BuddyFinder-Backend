@@ -33,4 +33,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     // Lấy notifications theo type
     List<Notification> findByUser_UserIdAndTypeOrderByCreatedAtDesc(Long userId, Notification.NotificationType type);
+
+    // === 🆕 DELETE METHOD FOR GDPR COMPLIANCE ===
+    void deleteByUser_UserId(Long userId);
 }

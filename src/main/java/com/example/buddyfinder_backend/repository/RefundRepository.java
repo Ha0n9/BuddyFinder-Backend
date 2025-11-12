@@ -37,4 +37,7 @@ public interface RefundRepository extends JpaRepository<Refund, Long> {
     // Tổng số tiền refund theo status
     @Query("SELECT SUM(r.originalAmount) FROM Refund r WHERE r.status = :status")
     java.math.BigDecimal sumAmountByStatus(@Param("status") Refund.RefundStatus status);
+
+    // === 🆕 DELETE METHOD FOR GDPR COMPLIANCE ===
+    void deleteByUser_UserId(Long userId);
 }

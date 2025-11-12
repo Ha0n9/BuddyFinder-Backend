@@ -11,4 +11,7 @@ import java.util.Optional;
 public interface ProfileRepository extends JpaRepository<Profile, Long> {
     Optional<Profile> findByUser(User user);
     Optional<Profile> findByUser_UserId(Long userId);
+
+    // === 🆕 DELETE METHOD FOR GDPR COMPLIANCE ===
+    void deleteByUser_UserId(Long userId);
 }

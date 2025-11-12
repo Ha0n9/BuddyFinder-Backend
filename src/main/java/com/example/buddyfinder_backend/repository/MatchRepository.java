@@ -17,4 +17,7 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
 
     @Query("SELECT m FROM Match m WHERE ((m.user1.userId = :user1Id AND m.user2.userId = :user2Id) OR (m.user1.userId = :user2Id AND m.user2.userId = :user1Id))")
     Optional<Match> findMatchBetweenUsers(Long user1Id, Long user2Id);
+
+    // === 🆕 DELETE METHOD FOR GDPR COMPLIANCE ===
+    void deleteByUser1_UserIdOrUser2_UserId(Long user1Id, Long user2Id);
 }

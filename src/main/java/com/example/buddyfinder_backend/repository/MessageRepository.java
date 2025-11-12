@@ -12,4 +12,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     List<Message> findByMatch_MatchIdOrderByTimestampAsc(Long matchId);
 
     Integer countByMatch_MatchIdAndIsReadFalseAndSender_UserIdNot(Long matchId, Long userId);
+
+    // === 🆕 DELETE METHOD FOR GDPR COMPLIANCE ===
+    void deleteBySender_UserId(Long senderId);
 }

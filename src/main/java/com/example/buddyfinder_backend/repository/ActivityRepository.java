@@ -17,4 +17,7 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
     List<Activity> findUpcomingActivities(LocalDateTime now);
 
     List<Activity> findByLocationContainingIgnoreCase(String location);
+
+    // === 🆕 DELETE METHOD FOR GDPR COMPLIANCE ===
+    void deleteByCreator_UserId(Long creatorId);
 }

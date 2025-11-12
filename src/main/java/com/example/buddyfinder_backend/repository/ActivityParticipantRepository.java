@@ -13,8 +13,11 @@ public interface ActivityParticipantRepository extends JpaRepository<ActivityPar
     boolean existsByActivity_ActivityIdAndUser_UserId(Long activityId, Long userId);
 
     // Get all participants of an activity
-     List<ActivityParticipant> findByActivity_ActivityId(Long activityId);
+    List<ActivityParticipant> findByActivity_ActivityId(Long activityId);
 
     // Get all activities a user joined
-     List<ActivityParticipant> findByUser_UserId(Long userId);
+    List<ActivityParticipant> findByUser_UserId(Long userId);
+
+    // === 🆕 DELETE METHOD FOR GDPR COMPLIANCE ===
+    void deleteByUser_UserId(Long userId);
 }

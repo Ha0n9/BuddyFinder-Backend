@@ -29,4 +29,7 @@ public interface AccountVerificationRepository extends JpaRepository<AccountVeri
 
     // Count pending verifications
     long countByStatus(AccountVerification.VerificationStatus status);
+
+    // === 🆕 DELETE METHOD FOR GDPR COMPLIANCE ===
+    void deleteByUser_UserId(Long userId);
 }
