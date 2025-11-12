@@ -103,7 +103,7 @@ public class UserService {
      * 7. All notifications
      * 8. All verification requests
      * 9. All refund requests
-     * 10. All referrals (as referrer or referee)
+     * 10. All referrals (as referrer or referred)
      * 11. All likes (given or received)
      * 12. Profile data
      * 13. Finally, the user account itself
@@ -206,11 +206,12 @@ public class UserService {
                 log.warn("⚠️ No refund requests found: {}", e.getMessage());
             }
 
-            // 10. Delete referrals (both as referrer and referee)
+            // 10. Delete referrals (both as referrer and referred)
+            // ⚠️ FIXED: Changed from deleteByReferee_UserId to deleteByReferred_UserId
             log.info("🔄 Step 10/13: Deleting referrals...");
             try {
                 referralRepository.deleteByReferrer_UserId(userId);
-                referralRepository.deleteByReferee_UserId(userId);
+                referralRepository.deleteByReferred_UserId(userId);  // ✅ CORRECT!
                 log.info("✅ Referrals deleted successfully");
             } catch (Exception e) {
                 log.warn("⚠️ No referrals found: {}", e.getMessage());

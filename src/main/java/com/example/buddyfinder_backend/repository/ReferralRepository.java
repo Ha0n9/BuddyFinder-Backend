@@ -36,6 +36,7 @@ public interface ReferralRepository extends JpaRepository<Referral, Long> {
     boolean existsByReferrer_UserIdAndReferredEmail(Long referrerId, String referredEmail);
 
     // === 🆕 DELETE METHODS FOR GDPR COMPLIANCE ===
+    // ⚠️ FIXED: Changed from 'referee' to 'referred' to match entity field name
     void deleteByReferrer_UserId(Long referrerId);
-    void deleteByReferee_UserId(Long refereeId);
+    void deleteByReferred_UserId(Long referredId);  // ✅ CORRECT - matches entity field 'referred'
 }
