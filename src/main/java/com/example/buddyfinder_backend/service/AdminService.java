@@ -212,7 +212,7 @@ public class AdminService {
         response.put("userId", refund.getUser().getUserId());
         response.put("userName", refund.getUser().getName());
         response.put("userEmail", refund.getUser().getEmail());
-        response.put("amount", refund.getOriginalAmount());
+        response.put("originalAmount", refund.getOriginalAmount());
         response.put("refundMethod", refund.getRefundMethod().name());
         response.put("refundType", refund.getRefundType().name());
         response.put("reason", refund.getReason().name());
@@ -223,7 +223,7 @@ public class AdminService {
         response.put("processedAt", refund.getProcessedAt());
         response.put("completedAt", refund.getCompletedAt());
         response.put("adminNotes", refund.getAdminNotes());
-        response.put("processedBy", refund.getProcessedBy() != null ?
+        response.put("processedByName", refund.getProcessedBy() != null ?
                 refund.getProcessedBy().getName() : null);
         return response;
     }
