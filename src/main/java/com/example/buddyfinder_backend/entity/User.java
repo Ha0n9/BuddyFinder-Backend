@@ -50,6 +50,9 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String bio;
 
+    @Column(columnDefinition = "TEXT")
+    private String profilePictureUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private TierType tier = TierType.FREE;
@@ -69,6 +72,8 @@ public class User {
 
     @Column(nullable = false)
     private Boolean isActive = true;
+
+    private LocalDateTime banUntil;
 
     @Column(nullable = false)
     private Boolean isVerified = false;

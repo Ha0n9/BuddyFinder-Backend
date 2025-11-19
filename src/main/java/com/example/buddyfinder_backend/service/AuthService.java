@@ -4,6 +4,7 @@ import com.example.buddyfinder_backend.dto.*;
 import com.example.buddyfinder_backend.entity.User;
 import com.example.buddyfinder_backend.repository.UserRepository;
 import com.example.buddyfinder_backend.security.JwtUtil;
+import com.example.buddyfinder_backend.util.SanitizeUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,21 +19,34 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
+    private final ReferralService referralService;
 
     public AuthResponse register(RegisterRequest request) {
         // Check if email exists
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new IllegalArgumentException("Email already exists");
         }
+
+        String normalizedName = SanitizeUtil.sanitize(request.getName());
+        if (normalizedName.length() > 35) {
+            throw new IllegalArgumentException("Name must be 35 characters or fewer");
+        }
+
+        String normalizedLocation = SanitizeUtil.sanitize(request.getLocation());
+        if (normalizedLocation.length() > 40) {
+            throw new IllegalArgumentException("Location must be 40 characters or fewer");
+        }
+
+        String sanitizedInterests = SanitizeUtil.sanitize(request.getInterests());
 
         // Create new user
         User user = User.builder()
-                .name(request.getName())
-                .email(request.getEmail())
+                .name(normalizedName)
+                .email(request.getEmail().trim().toLowerCase())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .age(request.getAge())
-                .interests(request.getInterests())
-                .location(request.getLocation())
+                .interests(sanitizedInterests)
+                .location(normalizedLocation)
                 .availability(true)
                 .tier(User.TierType.FREE)
                 .isActive(true)
@@ -41,6 +55,9 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
+
+        // Track referral if code was provided
+        referralService.processReferralSignup(request.getReferralCode(), savedUser.getUserId());
 
         // UPDATED: Generate JWT token with isAdmin flag
         String token = jwtUtil.generateToken(
@@ -66,7 +83,13 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (Boolean.FALSE.equals(user.getIsActive())) {
-            throw new RuntimeException("Your account has been banned. Please contact support.");
+            if (user.getBanUntil() != null && user.getBanUntil().isBefore(java.time.LocalDateTime.now())) {
+                user.setIsActive(true);
+                user.setBanUntil(null);
+                userRepository.save(user);
+            } else {
+                throw new RuntimeException("Your account has been banned. Please contact support.");
+            }
         }
 
         // UPDATED: Generate JWT token with isAdmin flag
@@ -96,6 +119,7 @@ public class AuthService {
                 .fitnessLevel(user.getFitnessLevel())
                 .isVerified(user.getIsVerified())
                 .isAdmin(user.getIsAdmin())
+                .profilePictureUrl(user.getProfilePictureUrl())
                 .build();
     }
 }

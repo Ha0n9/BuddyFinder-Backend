@@ -185,7 +185,8 @@ public class MatchService {
                 .mbtiType(user.getMbtiType())
                 .fitnessLevel(user.getFitnessLevel())
                 .isVerified(user.getIsVerified())
-                .isAdmin(user.getIsAdmin());
+                .isAdmin(user.getIsAdmin())
+                .profilePictureUrl(user.getProfilePictureUrl());
 
         // Add photos from profile
         Optional<Profile> profile = profileRepository.findByUser_UserId(user.getUserId());

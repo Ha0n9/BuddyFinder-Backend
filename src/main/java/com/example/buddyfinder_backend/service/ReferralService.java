@@ -33,40 +33,51 @@ public class ReferralService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Find existing referral code or create new one
+        // Find existing referrals
         List<Referral> referrals = referralRepository.findByReferrer_UserIdOrderByCreatedAtDesc(userId);
 
-        String referralCode;
-        if (referrals.isEmpty()) {
-            // Generate new unique code
-            referralCode = generateUniqueReferralCode(user);
-        } else {
-            // Use existing code from first referral
-            referralCode = referrals.get(0).getReferralCode();
+        Referral baseReferral = referrals.stream()
+                .filter(this::isPlaceholderReferral)
+                .findFirst()
+                .orElse(null);
+
+        if (baseReferral == null) {
+            baseReferral = createBaseReferral(user);
+            referrals.add(0, baseReferral);
         }
 
-        // Count accepted referrals
+        String referralCode = baseReferral.getReferralCode();
+
+        // Count accepted referrals (real ones only)
         Long acceptedCount = referralRepository.countAcceptedReferralsByReferrer(userId);
 
         // Check if user can claim reward
         Boolean canClaimReward = acceptedCount >= 3;
+        boolean featureLocked = acceptedCount >= 3;
 
         // Check if reward already claimed
         Boolean rewardClaimed = referrals.stream()
                 .anyMatch(Referral::getRewardClaimed);
 
         // Build response
-        List<ReferralResponse.ReferralDetail> inviteDetails = referrals.stream()
+        List<Referral> actualInvites = referrals.stream()
+                .filter(ref -> !isPlaceholderReferral(ref))
+                .collect(Collectors.toList());
+
+        List<ReferralResponse.ReferralDetail> inviteDetails = actualInvites.stream()
                 .map(this::mapToReferralDetail)
                 .collect(Collectors.toList());
+
+        long totalInvited = actualInvites.size();
 
         return ReferralResponse.builder()
                 .referralCode(referralCode)
                 .referralLink("http://localhost:5173/register?ref=" + referralCode)
-                .totalInvited((long) referrals.size())
+                .totalInvited(totalInvited)
                 .acceptedCount(acceptedCount)
                 .canClaimReward(canClaimReward && !rewardClaimed)
                 .rewardClaimed(rewardClaimed)
+                .featureLocked(featureLocked)
                 .invites(inviteDetails)
                 .build();
     }
@@ -78,6 +89,11 @@ public class ReferralService {
     public Referral sendInvite(Long referrerId, String friendEmail) {
         User referrer = userRepository.findById(referrerId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Long acceptedCount = referralRepository.countAcceptedReferralsByReferrer(referrerId);
+        if (acceptedCount != null && acceptedCount >= 3) {
+            throw new RuntimeException("You've already invited 3 friends. This perk can only be used once.");
+        }
 
         // Validate email
         if (friendEmail == null || friendEmail.trim().isEmpty()) {
@@ -99,14 +115,7 @@ public class ReferralService {
             throw new RuntimeException("You have already invited this email");
         }
 
-        // Get or create referral code
-        List<Referral> existingReferrals = referralRepository.findByReferrer_UserIdOrderByCreatedAtDesc(referrerId);
-        String referralCode;
-        if (existingReferrals.isEmpty()) {
-            referralCode = generateUniqueReferralCode(referrer);
-        } else {
-            referralCode = existingReferrals.get(0).getReferralCode();
-        }
+        String referralCode = ensureBaseReferral(referrer).getReferralCode();
 
         // Create referral
         Referral referral = Referral.builder()
@@ -135,41 +144,55 @@ public class ReferralService {
             return; // No referral code provided
         }
 
-        Referral referral = referralRepository.findByReferralCode(referralCode)
-                .orElseThrow(() -> new RuntimeException("Invalid referral code"));
+        String trimmedCode = referralCode.trim();
+        List<Referral> referralsByCode = referralRepository.findAllByReferralCode(trimmedCode);
+
+        if (referralsByCode.isEmpty()) {
+            log.warn("⚠️ Referral signup attempted with invalid code: {}", referralCode);
+            return; // Do not block registration if code is invalid
+        }
 
         User newUser = userRepository.findById(newUserId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Check if this email matches an invite
-        boolean matchesInvite = referral.getReferredEmail() != null &&
-                referral.getReferredEmail().equalsIgnoreCase(newUser.getEmail());
+        // Try to find invite matching this email
+        Referral emailMatch = referralsByCode.stream()
+                .filter(r -> r.getReferredEmail() != null &&
+                        r.getReferredEmail().equalsIgnoreCase(newUser.getEmail()))
+                .findFirst()
+                .orElse(null);
 
-        if (!matchesInvite) {
-            // Create new referral record for this signup
+        Referral referrerHolder;
+
+        if (emailMatch != null) {
+            referrerHolder = emailMatch;
+            emailMatch.setReferred(newUser);
+            emailMatch.setStatus(Referral.ReferralStatus.ACCEPTED);
+            emailMatch.setAcceptedAt(LocalDateTime.now());
+            referralRepository.save(emailMatch);
+        } else {
+            referrerHolder = referralsByCode.stream()
+                    .filter(this::isPlaceholderReferral)
+                    .findFirst()
+                    .orElse(referralsByCode.get(0));
+
             Referral newReferral = Referral.builder()
-                    .referrer(referral.getReferrer())
+                    .referrer(referrerHolder.getReferrer())
                     .referred(newUser)
-                    .referralCode(referralCode)
+                    .referralCode(trimmedCode)
                     .referredEmail(newUser.getEmail())
                     .status(Referral.ReferralStatus.ACCEPTED)
                     .acceptedAt(LocalDateTime.now())
                     .rewardClaimed(false)
                     .build();
             referralRepository.save(newReferral);
-        } else {
-            // Update existing referral
-            referral.setReferred(newUser);
-            referral.setStatus(Referral.ReferralStatus.ACCEPTED);
-            referral.setAcceptedAt(LocalDateTime.now());
-            referralRepository.save(referral);
         }
 
-        log.info("✅ Referral accepted: {} signed up using code {}", newUser.getEmail(), referralCode);
+        log.info("✅ Referral accepted: {} signed up using code {}", newUser.getEmail(), trimmedCode);
 
         // Notify referrer
         notificationService.createNotification(
-                referral.getReferrer().getUserId(),
+                referrerHolder.getReferrer().getUserId(),
                 Notification.NotificationType.SYSTEM,
                 "Friend Joined! 🎉",
                 newUser.getName() + " just signed up using your referral link!",
@@ -179,15 +202,18 @@ public class ReferralService {
 
         // Check if referrer can claim reward
         Long acceptedCount = referralRepository.countAcceptedReferralsByReferrer(
-                referral.getReferrer().getUserId());
+                referrerHolder.getReferrer().getUserId());
 
-        if (acceptedCount >= 3 && !referral.getRewardClaimed()) {
+        Boolean hasUnclaimedReward = referralRepository.hasUnclaimedReward(
+                referrerHolder.getReferrer().getUserId());
+
+        if (Boolean.TRUE.equals(hasUnclaimedReward)) {
             notificationService.createNotification(
-                    referral.getReferrer().getUserId(),
+                    referrerHolder.getReferrer().getUserId(),
                     Notification.NotificationType.SYSTEM,
                     "Claim Your Reward! 🎁",
                     "You've referred 3 friends! Claim your FREE month of Premium now!",
-                    referral.getReferrer().getUserId(),
+                    referrerHolder.getReferrer().getUserId(),
                     "REWARD"
             );
         }
@@ -285,5 +311,26 @@ public class ReferralService {
                 .createdAt(referral.getCreatedAt())
                 .acceptedAt(referral.getAcceptedAt())
                 .build();
+    }
+
+    private Referral createBaseReferral(User user) {
+        return referralRepository.save(
+                Referral.builder()
+                        .referrer(user)
+                        .referralCode(generateUniqueReferralCode(user))
+                        .status(Referral.ReferralStatus.PENDING)
+                        .rewardClaimed(false)
+                        .build()
+        );
+    }
+
+    private Referral ensureBaseReferral(User user) {
+        return referralRepository
+                .findFirstByReferrer_UserIdAndReferredIsNullAndReferredEmailIsNull(user.getUserId())
+                .orElseGet(() -> createBaseReferral(user));
+    }
+
+    private boolean isPlaceholderReferral(Referral referral) {
+        return referral.getReferred() == null && referral.getReferredEmail() == null;
     }
 }

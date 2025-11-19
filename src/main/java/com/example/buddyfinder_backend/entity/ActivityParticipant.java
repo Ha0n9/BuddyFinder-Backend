@@ -1,5 +1,6 @@
 package com.example.buddyfinder_backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -25,6 +26,17 @@ public class ActivityParticipant {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({
+            "password",
+            "likesGiven",
+            "likesReceived",
+            "matchesAsUser1",
+            "matchesAsUser2",
+            "messagesSent",
+            "ratingsGiven",
+            "ratingsReceived",
+            "activitiesCreated"
+    })
     private User user;
 
     @CreationTimestamp

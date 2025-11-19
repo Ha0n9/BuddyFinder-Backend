@@ -30,7 +30,7 @@ public class Referral {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User referred; // User who signed up using the code (null until signup)
 
-    @Column(nullable = false, unique = true, length = 20)
+    @Column(nullable = false, length = 20)
     private String referralCode; // Unique code for referrer (e.g., "USER123ABC")
 
     @Column(length = 100)

@@ -1,6 +1,7 @@
 package com.example.buddyfinder_backend.security;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -61,7 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write("{\"error\":\"Token expired\",\"message\":\"Please login again\"}");
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             logger.error("JWT Authentication error: " + e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");

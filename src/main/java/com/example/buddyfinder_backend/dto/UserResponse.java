@@ -26,4 +26,5 @@ public class UserResponse {
     private Boolean isVerified;
     private Boolean isAdmin;
     private String photos;
+    private String profilePictureUrl;
 }

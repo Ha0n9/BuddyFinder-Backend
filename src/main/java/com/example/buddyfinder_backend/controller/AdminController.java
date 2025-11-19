@@ -1,6 +1,7 @@
 package com.example.buddyfinder_backend.controller;
 
 import com.example.buddyfinder_backend.entity.Activity;
+import com.example.buddyfinder_backend.entity.Report;
 import com.example.buddyfinder_backend.entity.User;
 import com.example.buddyfinder_backend.security.JwtUtil;
 import com.example.buddyfinder_backend.service.AdminService;
@@ -78,6 +79,54 @@ public class AdminController {
         Long adminId = extractUserIdFromToken(authHeader);
         adminService.deleteActivity(activityId, adminId);
         return ResponseEntity.ok(Map.of("message", "Activity deleted successfully"));
+    }
+
+    // ============ RATINGS ============
+
+    @GetMapping("/ratings")
+    public ResponseEntity<List<Map<String, Object>>> getAllRatings(
+            @RequestHeader("Authorization") String authHeader) {
+        Long adminId = extractUserIdFromToken(authHeader);
+        return ResponseEntity.ok(adminService.getAllRatings(adminId));
+    }
+
+    @DeleteMapping("/ratings/{ratingId}")
+    public ResponseEntity<Map<String, String>> deleteRating(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long ratingId) {
+        Long adminId = extractUserIdFromToken(authHeader);
+        adminService.deleteRating(ratingId, adminId);
+        return ResponseEntity.ok(Map.of("message", "Rating deleted successfully"));
+    }
+
+    // ============ REPORTS ============
+
+    @GetMapping("/reports")
+    public ResponseEntity<List<Map<String, Object>>> getAllReports(
+            @RequestHeader("Authorization") String authHeader) {
+        Long adminId = extractUserIdFromToken(authHeader);
+        return ResponseEntity.ok(adminService.getAllReports(adminId));
+    }
+
+    @PostMapping("/reports/{reportId}/status")
+    public ResponseEntity<Map<String, Object>> updateReportStatus(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long reportId,
+            @RequestBody Map<String, String> payload) {
+        Long adminId = extractUserIdFromToken(authHeader);
+        Report.ReportStatus status = Report.ReportStatus.valueOf(
+                payload.getOrDefault("status", "UNDER_REVIEW"));
+        return ResponseEntity.ok(adminService.updateReportStatus(adminId, reportId, status, payload.get("adminNotes")));
+    }
+
+    @PostMapping("/reports/{reportId}/ban")
+    public ResponseEntity<Map<String, Object>> banReportedUser(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long reportId,
+            @RequestBody Map<String, String> payload) {
+        Long adminId = extractUserIdFromToken(authHeader);
+        int days = Integer.parseInt(payload.getOrDefault("days", "3"));
+        return ResponseEntity.ok(adminService.banUserFromReport(adminId, reportId, days, payload.get("adminNotes")));
     }
 
     // ============ REFUND MANAGEMENT ============

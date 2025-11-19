@@ -4,6 +4,7 @@ import com.example.buddyfinder_backend.entity.Profile;
 import com.example.buddyfinder_backend.entity.User;
 import com.example.buddyfinder_backend.repository.ProfileRepository;
 import com.example.buddyfinder_backend.repository.UserRepository;
+import com.example.buddyfinder_backend.util.SanitizeUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,25 +35,25 @@ public class ProfileService {
             profile.setPhotos((String) updates.get("photos"));
         }
         if (updates.containsKey("fitnessGoals")) {
-            profile.setFitnessGoals((String) updates.get("fitnessGoals"));
+            profile.setFitnessGoals(SanitizeUtil.sanitize((String) updates.get("fitnessGoals")));
         }
         if (updates.containsKey("preferredActivities")) {
-            profile.setPreferredActivities((String) updates.get("preferredActivities"));
+            profile.setPreferredActivities(SanitizeUtil.sanitize((String) updates.get("preferredActivities")));
         }
         if (updates.containsKey("workoutFrequency")) {
             profile.setWorkoutFrequency((Integer) updates.get("workoutFrequency"));
         }
         if (updates.containsKey("experienceLevel")) {
-            profile.setExperienceLevel((String) updates.get("experienceLevel"));
+            profile.setExperienceLevel(SanitizeUtil.sanitize((String) updates.get("experienceLevel")));
         }
         if (updates.containsKey("certifications")) {
-            profile.setCertifications((String) updates.get("certifications"));
+            profile.setCertifications(SanitizeUtil.sanitize((String) updates.get("certifications")));
         }
         if (updates.containsKey("gymLocation")) {
-            profile.setGymLocation((String) updates.get("gymLocation"));
+            profile.setGymLocation(SanitizeUtil.sanitize((String) updates.get("gymLocation")));
         }
         if (updates.containsKey("workoutTimePref")) {
-            profile.setWorkoutTimePref((String) updates.get("workoutTimePref"));
+            profile.setWorkoutTimePref(SanitizeUtil.sanitize((String) updates.get("workoutTimePref")));
         }
 
         return profileRepository.save(profile);
@@ -106,6 +107,27 @@ public class ProfileService {
         profile.setPhotos(photoList.isEmpty() ? null : toJsonArray(photoList));
 
         return profileRepository.save(profile);
+    }
+
+    public String uploadProfilePicture(Long userId, MultipartFile file) {
+        Profile profile = getProfileByUserId(userId);
+        User user = profile.getUser();
+
+        if (user == null) {
+            throw new RuntimeException("User not found for profile");
+        }
+
+        String previousUrl = user.getProfilePictureUrl();
+        String newUrl = cloudinaryService.uploadImage(file);
+
+        user.setProfilePictureUrl(newUrl);
+        userRepository.save(user);
+
+        if (previousUrl != null && !previousUrl.isBlank()) {
+            cloudinaryService.deleteImage(previousUrl);
+        }
+
+        return newUrl;
     }
 
     private Profile createDefaultProfile(Long userId) {

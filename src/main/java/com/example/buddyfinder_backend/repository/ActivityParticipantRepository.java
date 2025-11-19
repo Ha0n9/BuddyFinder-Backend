@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ActivityParticipantRepository extends JpaRepository<ActivityParticipant, Long> {
@@ -18,6 +19,9 @@ public interface ActivityParticipantRepository extends JpaRepository<ActivityPar
     // Get all activities a user joined
     List<ActivityParticipant> findByUser_UserId(Long userId);
 
-    // === 🆕 DELETE METHOD FOR GDPR COMPLIANCE ===
+    // === 🆕 REQUIRED FOR leaveActivity() ===
+    Optional<ActivityParticipant> findByActivity_ActivityIdAndUser_UserId(Long activityId, Long userId);
+
+    // === DELETE user's activity history (if needed) ===
     void deleteByUser_UserId(Long userId);
 }

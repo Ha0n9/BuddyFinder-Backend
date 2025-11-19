@@ -13,6 +13,10 @@ public interface ReferralRepository extends JpaRepository<Referral, Long> {
 
     // Find referral by code
     Optional<Referral> findByReferralCode(String referralCode);
+    List<Referral> findAllByReferralCode(String referralCode);
+
+    Optional<Referral> findFirstByReferrer_UserIdAndReferredIsNullAndReferredEmailIsNull(Long referrerId);
+    Optional<Referral> findFirstByReferralCodeAndReferredIsNullAndReferredEmailIsNull(String referralCode);
 
     // Find all referrals made by a user
     List<Referral> findByReferrer_UserIdOrderByCreatedAtDesc(Long referrerId);

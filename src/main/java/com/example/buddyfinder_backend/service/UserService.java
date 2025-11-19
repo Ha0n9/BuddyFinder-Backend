@@ -3,6 +3,7 @@ package com.example.buddyfinder_backend.service;
 import com.example.buddyfinder_backend.dto.UserResponse;
 import com.example.buddyfinder_backend.entity.User;
 import com.example.buddyfinder_backend.repository.*;
+import com.example.buddyfinder_backend.util.SanitizeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -46,34 +47,55 @@ public class UserService {
 
         // Update fields if present
         if (updates.containsKey("name")) {
-            user.setName((String) updates.get("name"));
+            Object nameObj = updates.get("name");
+            if (nameObj instanceof String name) {
+                String trimmed = SanitizeUtil.sanitize(name);
+                if (trimmed.length() > 35) {
+                    throw new IllegalArgumentException("Name must be 35 characters or fewer");
+                }
+                user.setName(trimmed);
+            }
         }
         if (updates.containsKey("age")) {
-            user.setAge((Integer) updates.get("age"));
+            Object ageObj = updates.get("age");
+            if (ageObj instanceof Number ageNumber) {
+                int age = ageNumber.intValue();
+                if (age < 18 || age > 65) {
+                    throw new IllegalArgumentException("Age must be between 18 and 65");
+                }
+                user.setAge(age);
+            }
         }
         if (updates.containsKey("gender")) {
-            user.setGender((String) updates.get("gender"));
+            user.setGender(SanitizeUtil.sanitize((String) updates.get("gender")));
         }
         if (updates.containsKey("interests")) {
-            user.setInterests((String) updates.get("interests"));
+            user.setInterests(SanitizeUtil.sanitize((String) updates.get("interests")));
         }
         if (updates.containsKey("location")) {
-            user.setLocation((String) updates.get("location"));
+            Object locationObj = updates.get("location");
+            if (locationObj instanceof String location) {
+                String trimmed = SanitizeUtil.sanitize(location);
+                if (trimmed.length() > 40) {
+                    throw new IllegalArgumentException("Location must be 40 characters or fewer");
+                }
+                user.setLocation(trimmed);
+            }
         }
         if (updates.containsKey("availability")) {
             user.setAvailability((Boolean) updates.get("availability"));
         }
         if (updates.containsKey("bio")) {
-            user.setBio((String) updates.get("bio"));
+            user.setBio(SanitizeUtil.sanitize((String) updates.get("bio")));
         }
         if (updates.containsKey("zodiacSign")) {
-            user.setZodiacSign((String) updates.get("zodiacSign"));
+            user.setZodiacSign(SanitizeUtil.sanitize((String) updates.get("zodiacSign")));
         }
         if (updates.containsKey("mbtiType")) {
-            user.setMbtiType((String) updates.get("mbtiType"));
+            user.setMbtiType(SanitizeUtil.sanitize((String) updates.get("mbtiType")));
         }
         if (updates.containsKey("fitnessLevel")) {
-            user.setFitnessLevel((String) updates.get("fitnessLevel"));
+            user.setFitnessLevel(SanitizeUtil.sanitize((String) updates.get("fitnessLevel")));
         }
 
         User savedUser = userRepository.save(user);
@@ -276,6 +298,7 @@ public class UserService {
                 .fitnessLevel(user.getFitnessLevel())
                 .isVerified(user.getIsVerified())
                 .isAdmin(user.getIsAdmin())
+                .profilePictureUrl(user.getProfilePictureUrl())
                 .build();
     }
 }

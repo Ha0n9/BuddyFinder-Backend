@@ -140,12 +140,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/referral/validate/**").permitAll()
+                        .requestMatchers("/api/referral/info").authenticated()
+                        .requestMatchers("/api/referral/invite").authenticated()
+                        .requestMatchers("/api/referral/claim-reward").authenticated()
+                        .requestMatchers("/api/group-chat/rooms/me").permitAll()
                         // ✅ Allow WebSocket endpoints
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/app/**").permitAll()
                         .requestMatchers("/topic/**").permitAll()
-                        // ✅ NEW: Allow verification endpoints (authenticated users only)
-                        .requestMatchers("/api/referral/**").authenticated()
+                        .requestMatchers("/api/reports/**").authenticated()
                         .requestMatchers("/api/verification/**").authenticated()
                         .anyRequest().authenticated()
                 )

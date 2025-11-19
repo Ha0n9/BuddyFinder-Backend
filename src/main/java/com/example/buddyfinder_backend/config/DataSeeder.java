@@ -1,4 +1,4 @@
-// Create seed data for testing
+//// Create seed data for testing
 //package com.example.buddyfinder_backend.config;
 //
 //import com.example.buddyfinder_backend.entity.User;

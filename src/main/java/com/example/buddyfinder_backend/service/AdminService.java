@@ -1,13 +1,5 @@
 package com.example.buddyfinder_backend.service;
 
-import com.example.buddyfinder_backend.entity.Activity;
-import com.example.buddyfinder_backend.entity.User;
-import com.example.buddyfinder_backend.repository.ActivityRepository;
-import com.example.buddyfinder_backend.repository.MatchRepository;
-import com.example.buddyfinder_backend.repository.MessageRepository;
-import com.example.buddyfinder_backend.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import com.example.buddyfinder_backend.entity.*;
 import com.example.buddyfinder_backend.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,8 +20,11 @@ public class AdminService {
     private final ActivityRepository activityRepository;
     private final MatchRepository matchRepository;
     private final MessageRepository messageRepository;
+    private final RatingRepository ratingRepository;
     private final RefundRepository refundRepository; // ADD THIS
     private final NotificationService notificationService; // ADD THIS
+    private final ReportService reportService;
+    private final UserService userService;
 
     public Map<String, Object> getDashboardStats() {
         long totalUsers = userRepository.count();
@@ -82,15 +79,10 @@ public class AdminService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public void deleteUser(Long userId, Long adminId) {
-        User admin = userRepository.findById(adminId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
-
-        if (!admin.getIsAdmin()) {
-            throw new RuntimeException("Unauthorized: Not an admin");
-        }
-
-        userRepository.deleteById(userId);
+        verifyAdmin(adminId);
+        userService.deleteUserAccount(userId);
     }
 
     public List<Activity> getAllActivities() {
@@ -106,6 +98,17 @@ public class AdminService {
         }
 
         activityRepository.deleteById(activityId);
+    }
+
+    public List<Map<String, Object>> getAllRatings(Long adminId) {
+        verifyAdmin(adminId);
+        List<Rating> ratings = ratingRepository.findAll();
+        return ratings.stream().map(this::mapRatingToResponse).toList();
+    }
+
+    public void deleteRating(Long ratingId, Long adminId) {
+        verifyAdmin(adminId);
+        ratingRepository.deleteById(ratingId);
     }
 
     // ============ REFUND MANAGEMENT ============
@@ -226,5 +229,55 @@ public class AdminService {
         response.put("processedByName", refund.getProcessedBy() != null ?
                 refund.getProcessedBy().getName() : null);
         return response;
+    }
+
+    public List<Map<String, Object>> getAllReports(Long adminId) {
+        verifyAdmin(adminId);
+        return reportService.getAllReports();
+    }
+
+    public Map<String, Object> updateReportStatus(Long adminId, Long reportId, Report.ReportStatus status, String adminNotes) {
+        verifyAdmin(adminId);
+        return reportService.updateStatus(reportId, status, adminNotes);
+    }
+
+    @Transactional
+    public Map<String, Object> banUserFromReport(Long adminId, Long reportId, int days, String adminNotes) {
+        User admin = verifyAdmin(adminId);
+        Map<String, Object> reportData = reportService.updateStatus(reportId, Report.ReportStatus.ACTION_TAKEN, adminNotes);
+        Map<?, ?> reported = (Map<?, ?>) reportData.get("reported");
+        Long reportedId = ((Number) reported.get("userId")).longValue();
+
+        User user = userRepository.findById(reportedId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        LocalDateTime banExpires = LocalDateTime.now().plusDays(days);
+        user.setIsActive(false);
+        user.setBanUntil(banExpires);
+        userRepository.save(user);
+
+        notificationService.createNotification(
+                user.getUserId(),
+                Notification.NotificationType.SYSTEM,
+                "Account Suspended",
+                "An administrator has suspended your account for " + days + " days due to policy violations.",
+                reportId,
+                "REPORT"
+        );
+
+        return reportData;
+    }
+
+    private Map<String, Object> mapRatingToResponse(Rating rating) {
+        Map<String, Object> dto = new HashMap<>();
+        dto.put("id", rating.getRatingId());
+        dto.put("fromUserId", rating.getFromUser() != null ? rating.getFromUser().getUserId() : null);
+        dto.put("fromUserName", rating.getFromUser() != null ? rating.getFromUser().getName() : null);
+        dto.put("toUserId", rating.getToUser() != null ? rating.getToUser().getUserId() : null);
+        dto.put("toUserName", rating.getToUser() != null ? rating.getToUser().getName() : null);
+        dto.put("rating", rating.getRating());
+        dto.put("comment", rating.getReview());
+        dto.put("createdAt", rating.getCreatedAt());
+        return dto;
     }
 }

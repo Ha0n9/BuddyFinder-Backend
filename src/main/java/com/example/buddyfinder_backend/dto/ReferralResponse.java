@@ -19,6 +19,7 @@ public class ReferralResponse {
     private Long acceptedCount;
     private Boolean canClaimReward;
     private Boolean rewardClaimed;
+    private Boolean featureLocked;
     private List<ReferralDetail> invites;
 
     @Data

@@ -73,6 +73,20 @@ public class ProfileController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/profile-picture")
+    public ResponseEntity<Map<String, Object>> uploadProfilePicture(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam("file") MultipartFile file) {
+        Long userId = extractUserIdFromToken(authHeader);
+        String url = profileService.uploadProfilePicture(userId, file);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("profilePictureUrl", url);
+        response.put("message", "Profile picture updated");
+
+        return ResponseEntity.ok(response);
+    }
+
     private Long extractUserIdFromToken(String authHeader) {
         String token = authHeader.substring(7);
         return jwtUtil.extractUserId(token);

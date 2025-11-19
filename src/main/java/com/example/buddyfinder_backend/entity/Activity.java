@@ -25,8 +25,8 @@ public class Activity {
     private User creator;
 
     // ADD: Relationship with participants for cascade delete
-    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties({"activity", "user"})
+    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties({"activity"})
     private List<ActivityParticipant> participants;
 
     @Column(nullable = false)
@@ -46,6 +46,7 @@ public class Activity {
 
     private String difficultyLevel;
 
+    @Column(nullable = false)
     private Boolean isCancelled;
 
     @Column(nullable = false, updatable = false)
