@@ -96,7 +96,18 @@ public class NotificationService {
                 "New Message 💬",
                 senderName + " sent you a message",
                 matchId,
-                "MESSAGE"
+                "MATCH"
+        );
+    }
+
+    public void notifyGroupMessage(Long userId, Long roomId, String senderName, String activityTitle) {
+        createNotification(
+                userId,
+                Notification.NotificationType.MESSAGE,
+                "Group Chat 💬",
+                senderName + " sent a message in " + (activityTitle != null ? activityTitle : "a group chat"),
+                roomId,
+                "GROUP"
         );
     }
 

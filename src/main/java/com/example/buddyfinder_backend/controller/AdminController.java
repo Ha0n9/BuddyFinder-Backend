@@ -39,10 +39,21 @@ public class AdminController {
     @PostMapping("/users/{userId}/ban")
     public ResponseEntity<User> banUser(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long userId) {
+            @PathVariable Long userId,
+            @RequestBody(required = false) Map<String, Object> payload) {
 
         Long adminId = extractUserIdFromToken(authHeader);
-        return ResponseEntity.ok(adminService.banUser(userId, adminId));
+        int days = 0;
+        String reason = null;
+        if (payload != null) {
+            if (payload.get("days") != null) {
+                days = Integer.parseInt(payload.get("days").toString());
+            }
+            if (payload.get("reason") != null) {
+                reason = payload.get("reason").toString();
+            }
+        }
+        return ResponseEntity.ok(adminService.banUser(userId, adminId, days, reason));
     }
 
     @PostMapping("/users/{userId}/unban")

@@ -148,8 +148,11 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/app/**").permitAll()
                         .requestMatchers("/topic/**").permitAll()
+                        .requestMatchers("/api/support/contact").permitAll()
+                        .requestMatchers("/api/support/**").authenticated()
                         .requestMatchers("/api/reports/**").authenticated()
                         .requestMatchers("/api/verification/**").authenticated()
+                        .requestMatchers("/api/subscriptions/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

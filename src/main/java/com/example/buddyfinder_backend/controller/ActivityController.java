@@ -7,10 +7,12 @@ import com.example.buddyfinder_backend.dto.ChatRoomInfoDto;
 import com.example.buddyfinder_backend.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/activities")
@@ -43,21 +45,23 @@ public class ActivityController {
     }
 
     @PostMapping("/{activityId}/join")
-    public String joinActivity(
+    public ResponseEntity<?> joinActivity(
             @RequestHeader("Authorization") String auth,
             @PathVariable Long activityId
     ) {
         Long userId = extractUserId(auth);
-        return activityService.joinActivity(activityId, userId);
+        String msg = activityService.joinActivity(activityId, userId);
+        return ResponseEntity.ok(Map.of("message", msg));
     }
 
     @PostMapping("/{activityId}/leave")
-    public String leaveActivity(
+    public ResponseEntity<?> leaveActivity(
             @RequestHeader("Authorization") String auth,
             @PathVariable Long activityId
     ) {
         Long userId = extractUserId(auth);
-        return activityService.leaveActivity(activityId, userId);
+        String message = activityService.leaveActivity(activityId, userId);
+        return ResponseEntity.ok().body(Map.of("message", message));
     }
 
     @GetMapping("/{activityId}/chat-room")

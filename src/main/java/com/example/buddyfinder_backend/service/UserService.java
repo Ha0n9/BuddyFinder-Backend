@@ -38,6 +38,30 @@ public class UserService {
         return mapToUserResponse(user);
     }
 
+    public UserResponse updateTier(Long userId, String tierName) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        User.TierType newTier;
+        try {
+            newTier = User.TierType.valueOf(tierName.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid plan: " + tierName);
+        }
+
+        if (newTier == User.TierType.FREE) {
+            throw new IllegalArgumentException("Plan must be Premium or Elite");
+        }
+
+        user.setTier(newTier);
+        if (newTier != User.TierType.ELITE) {
+            user.setIncognitoMode(false);
+        }
+
+        User savedUser = userRepository.save(user);
+        return mapToUserResponse(savedUser);
+    }
+
     /**
      * Update user profile
      */
@@ -83,7 +107,10 @@ public class UserService {
             }
         }
         if (updates.containsKey("availability")) {
-            user.setAvailability((Boolean) updates.get("availability"));
+            Object availabilityObj = updates.get("availability");
+            if (availabilityObj instanceof String availability) {
+                user.setAvailability(SanitizeUtil.sanitize(availability));
+            }
         }
         if (updates.containsKey("bio")) {
             user.setBio(SanitizeUtil.sanitize((String) updates.get("bio")));
@@ -96,6 +123,15 @@ public class UserService {
         }
         if (updates.containsKey("fitnessLevel")) {
             user.setFitnessLevel(SanitizeUtil.sanitize((String) updates.get("fitnessLevel")));
+        }
+        if (updates.containsKey("incognitoMode")) {
+            Object incognitoObj = updates.get("incognitoMode");
+            if (incognitoObj instanceof Boolean incognito) {
+                if (user.getTier() != User.TierType.ELITE) {
+                    throw new IllegalArgumentException("Incognito mode is only available for Elite members");
+                }
+                user.setIncognitoMode(incognito);
+            }
         }
 
         User savedUser = userRepository.save(user);
@@ -299,6 +335,7 @@ public class UserService {
                 .isVerified(user.getIsVerified())
                 .isAdmin(user.getIsAdmin())
                 .profilePictureUrl(user.getProfilePictureUrl())
+                .incognitoMode(user.getIncognitoMode())
                 .build();
     }
 }

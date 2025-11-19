@@ -23,8 +23,7 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
-    // COMMENT OUT for now to avoid dependency issues
-    // private final NotificationService notificationService;
+    private final NotificationService notificationService;
 
     public ChatMessage sendMessage(Long matchId, Long senderId, String content) {
         log.info("💬 MessageService.sendMessage called");
@@ -61,9 +60,6 @@ public class MessageService {
             Message savedMessage = messageRepository.save(message);
             log.info("✅ Message saved with ID: {}", savedMessage.getMessageId());
 
-            // ⚠️ TEMPORARILY DISABLED: Notification
-            // This might be causing the exception!
-            /*
             try {
                 notificationService.notifyNewMessage(
                         receiver.getUserId(),
@@ -73,9 +69,7 @@ public class MessageService {
                 log.info("✅ Notification sent");
             } catch (Exception e) {
                 log.error("⚠️ Failed to send notification (non-critical): {}", e.getMessage());
-                // Don't throw - notification failure shouldn't break message sending
             }
-            */
 
             log.info("🔄 Mapping to ChatMessage DTO...");
             ChatMessage chatMessage = mapToChatMessage(savedMessage);

@@ -29,6 +29,7 @@ public class SearchService {
                 .filter(user -> user.getIsActive()) // Only active users
                 .filter(user -> location == null || user.getLocation().toLowerCase().contains(location.toLowerCase()))
                 .filter(user -> interests == null || user.getInterests().toLowerCase().contains(interests.toLowerCase()))
+                .filter(user -> !Boolean.TRUE.equals(user.getIncognitoMode()))
                 .filter(user -> !hasAlreadyLiked(currentUserId, user.getUserId())) // Not already liked
                 .limit(20) // Limit results
                 .map(this::mapToUserResponseWithPhotos) // ✅ CHANGED
@@ -41,6 +42,7 @@ public class SearchService {
         return allUsers.stream()
                 .filter(user -> !user.getUserId().equals(currentUserId))
                 .filter(user -> user.getIsActive())
+                .filter(user -> !Boolean.TRUE.equals(user.getIncognitoMode()))
                 .filter(user -> !hasAlreadyLiked(currentUserId, user.getUserId()))
                 .limit(10)
                 .map(this::mapToUserResponseWithPhotos) // ✅ CHANGED
@@ -69,7 +71,8 @@ public class SearchService {
                 .fitnessLevel(user.getFitnessLevel())
                 .isVerified(user.getIsVerified())
                 .isAdmin(user.getIsAdmin())
-                .profilePictureUrl(user.getProfilePictureUrl());
+                .profilePictureUrl(user.getProfilePictureUrl())
+                .incognitoMode(user.getIncognitoMode());
 
         // Add photos from profile
         Optional<Profile> profile = profileRepository.findByUser_UserId(user.getUserId());

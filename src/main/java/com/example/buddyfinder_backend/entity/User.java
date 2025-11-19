@@ -45,7 +45,8 @@ public class User {
 
     private Float longitude;
 
-    private Boolean availability;
+    @Column(length = 120)
+    private String availability;
 
     @Column(columnDefinition = "TEXT")
     private String bio;
@@ -62,6 +63,10 @@ public class User {
     private String mbtiType;
 
     private String fitnessLevel;
+
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private Boolean incognitoMode = false;
 
     @CreationTimestamp
     @Column(updatable = false)

@@ -38,6 +38,7 @@ public class AuthService {
         }
 
         String sanitizedInterests = SanitizeUtil.sanitize(request.getInterests());
+        String sanitizedAvailability = SanitizeUtil.sanitize(request.getAvailability());
 
         // Create new user
         User user = User.builder()
@@ -47,7 +48,7 @@ public class AuthService {
                 .age(request.getAge())
                 .interests(sanitizedInterests)
                 .location(normalizedLocation)
-                .availability(true)
+                .availability(sanitizedAvailability)
                 .tier(User.TierType.FREE)
                 .isActive(true)
                 .isVerified(false)
@@ -119,6 +120,7 @@ public class AuthService {
                 .fitnessLevel(user.getFitnessLevel())
                 .isVerified(user.getIsVerified())
                 .isAdmin(user.getIsAdmin())
+                .incognitoMode(user.getIncognitoMode())
                 .profilePictureUrl(user.getProfilePictureUrl())
                 .build();
     }

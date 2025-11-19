@@ -17,7 +17,7 @@ public class UserResponse {
     private String gender;
     private String interests;
     private String location;
-    private Boolean availability;
+    private String availability;
     private String bio;
     private String tier;
     private String zodiacSign;
@@ -27,4 +27,5 @@ public class UserResponse {
     private Boolean isAdmin;
     private String photos;
     private String profilePictureUrl;
+    private Boolean incognitoMode;
 }

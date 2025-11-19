@@ -23,6 +23,7 @@ public class GroupChatService {
     private final GroupMessageRepository groupMessageRepository;
     private final ActivityRepository activityRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     // ========== ROOM INIT ==========
 
@@ -170,6 +171,16 @@ public class GroupChatService {
                 .build();
 
         msg = groupMessageRepository.save(msg);
+
+        // notify other members
+        List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoom_Id(roomId);
+        String activityTitle = room.getActivity() != null ? room.getActivity().getTitle() : "Group chat";
+        for (ChatRoomMember member : members) {
+            Long memberId = member.getUser().getUserId();
+            if (!memberId.equals(sender.getUserId())) {
+                notificationService.notifyGroupMessage(memberId, roomId, sender.getName(), activityTitle);
+            }
+        }
 
         return GroupChatMessageResponse.builder()
                 .id(msg.getId())

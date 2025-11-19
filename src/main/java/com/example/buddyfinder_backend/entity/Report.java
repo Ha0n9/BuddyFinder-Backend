@@ -29,9 +29,13 @@ public class Report {
     private User reporter;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reported_user_id", nullable = false)
+    @JoinColumn(name = "reported_user_id", referencedColumnName = "userId", nullable = false)
     @JsonIgnoreProperties({"password", "likesGiven", "likesReceived", "matchesAsUser1", "matchesAsUser2"})
     private User reported;
+
+    // Legacy column kept for backward compatibility with existing schema
+    @Column(name = "reported_id", nullable = false)
+    private Long legacyReportedId;
 
     @Column(nullable = false, length = 100)
     private String reason;
@@ -58,6 +62,14 @@ public class Report {
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties({"report"})
     private List<ReportMessage> messages;
+
+    @PrePersist
+    @PreUpdate
+    private void syncLegacyColumns() {
+        if (reported != null) {
+            legacyReportedId = reported.getUserId();
+        }
+    }
 
     public enum ReportStatus {
         OPEN,

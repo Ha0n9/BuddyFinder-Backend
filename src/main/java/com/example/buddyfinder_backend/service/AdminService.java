@@ -49,7 +49,7 @@ public class AdminService {
         return userRepository.findAll();
     }
 
-    public User banUser(Long userId, Long adminId) {
+    public User banUser(Long userId, Long adminId, int days, String reason) {
         User admin = userRepository.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
 
@@ -61,7 +61,35 @@ public class AdminService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         user.setIsActive(false);
-        return userRepository.save(user);
+        if (days > 0) {
+            user.setBanUntil(LocalDateTime.now().plusDays(days));
+        } else {
+            user.setBanUntil(null);
+        }
+        User saved = userRepository.save(user);
+
+        if (days > 0) {
+            notificationService.createNotification(
+                    user.getUserId(),
+                    Notification.NotificationType.SYSTEM,
+                    "Account Suspended",
+                    "An administrator has suspended your account for " + days + " days." +
+                            (reason != null && !reason.isBlank() ? " Reason: " + reason : ""),
+                    userId,
+                    "ADMIN"
+            );
+        } else if (reason != null && !reason.isBlank()) {
+            notificationService.createNotification(
+                    user.getUserId(),
+                    Notification.NotificationType.SYSTEM,
+                    "Account Suspended",
+                    "An administrator has suspended your account. Reason: " + reason,
+                    userId,
+                    "ADMIN"
+            );
+        }
+
+        return saved;
     }
 
     public User unbanUser(Long userId, Long adminId) {

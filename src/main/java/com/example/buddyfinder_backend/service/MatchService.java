@@ -186,7 +186,8 @@ public class MatchService {
                 .fitnessLevel(user.getFitnessLevel())
                 .isVerified(user.getIsVerified())
                 .isAdmin(user.getIsAdmin())
-                .profilePictureUrl(user.getProfilePictureUrl());
+                .profilePictureUrl(user.getProfilePictureUrl())
+                .incognitoMode(user.getIncognitoMode());
 
         // Add photos from profile
         Optional<Profile> profile = profileRepository.findByUser_UserId(user.getUserId());

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -32,7 +33,7 @@ public class ActivityService {
         // Assign creator and default values
         activity.setCreator(creator);
         activity.setCreatedAt(LocalDateTime.now());
-        activity.setCurrentCount(0);
+        activity.setCurrentCount(1);
         activity.setIsCancelled(false); // ensure DB not-null constraint satisfied
 
         // ❌ Removed: activity.setCancelled(false);
@@ -40,6 +41,14 @@ public class ActivityService {
 
         // Save activity first
         Activity savedActivity = activityRepository.save(activity);
+
+        // Automatically add creator as participant
+        ActivityParticipant creatorParticipant = ActivityParticipant.builder()
+                .activity(savedActivity)
+                .user(creator)
+                .joinedAt(LocalDateTime.now())
+                .build();
+        activityParticipantRepository.save(creatorParticipant);
 
         // 🔥 Create group chat room associated with this activity
         groupChatService.createRoomForActivity(savedActivity.getActivityId(), creatorId);
@@ -52,40 +61,45 @@ public class ActivityService {
      */
     @Transactional
     public String joinActivity(Long activityId, Long userId) {
+        try {
+            Activity activity = activityRepository.findById(activityId)
+                    .orElseThrow(() -> new RuntimeException("Activity not found"));
 
-        Activity activity = activityRepository.findById(activityId)
-                .orElseThrow(() -> new RuntimeException("Activity not found"));
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            if (activityParticipantRepository.existsByActivity_ActivityIdAndUser_UserId(activityId, userId)) {
+                throw new IllegalStateException("You are already a participant of this activity.");
+            }
 
-        // Check if already participating
-        if (activityParticipantRepository.existsByActivity_ActivityIdAndUser_UserId(activityId, userId)) {
-            return "You are already a participant of this activity.";
+            int currentCount = activity.getCurrentCount() != null ? activity.getCurrentCount() : 0;
+            if (currentCount >= activity.getMaxParticipants()) {
+                throw new IllegalStateException("Activity is full.");
+            }
+
+            // Add participant
+            ActivityParticipant participant = ActivityParticipant.builder()
+                    .activity(activity)
+                    .user(user)
+                    .joinedAt(LocalDateTime.now())
+                    .build();
+            activityParticipantRepository.save(participant);
+
+            activity.setCurrentCount(currentCount + 1);
+            activityRepository.save(activity);
+
+            try {
+                groupChatService.joinRoomByActivity(activityId, userId);
+            } catch (Exception e) {
+                System.out.println("Failed to auto join chat room, but activity join is successful.");
+            }
+
+
+            return "Joined activity successfully.";
+
+        } catch (Exception ex) {
+            return ex.getMessage();
         }
-
-        // Check if activity is full
-        if (activity.getCurrentCount() >= activity.getMaxParticipants()) {
-            return "Activity is full.";
-        }
-
-        // Save participant
-        ActivityParticipant participant = ActivityParticipant.builder()
-                .activity(activity)
-                .user(user)
-                .joinedAt(LocalDateTime.now())
-                .build();
-
-        activityParticipantRepository.save(participant);
-
-        // Increase participant count
-        activity.setCurrentCount(activity.getCurrentCount() + 1);
-        activityRepository.save(activity);
-
-        // Auto join group chat
-        groupChatService.joinRoomByActivity(activityId, userId);
-
-        return "Joined activity successfully.";
     }
 
     /**
@@ -102,11 +116,16 @@ public class ActivityService {
                 activityParticipantRepository.findByActivity_ActivityIdAndUser_UserId(activityId, userId)
                         .orElseThrow(() -> new RuntimeException("You are not a participant of this activity."));
 
-        // Remove participant
+        // Remove participant association before delete to avoid stale references
+        if (activity.getParticipants() != null) {
+            activity.getParticipants().removeIf(p ->
+                    p.getParticipantId().equals(participant.getParticipantId()));
+        }
         activityParticipantRepository.delete(participant);
 
         // Decrease participant count
-        activity.setCurrentCount(activity.getCurrentCount() - 1);
+        int currentCount = activity.getCurrentCount() != null ? activity.getCurrentCount() : 0;
+        activity.setCurrentCount(Math.max(0, currentCount - 1));
         activityRepository.save(activity);
 
         // Auto leave group chat
