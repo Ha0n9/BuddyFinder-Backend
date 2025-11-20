@@ -31,4 +31,6 @@ public class UserResponse {
     private String photos;
     private String profilePictureUrl;
     private Boolean incognitoMode;
+    private Double averageRating;
+    private Long totalRatings;
 }

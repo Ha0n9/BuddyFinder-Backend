@@ -4,6 +4,7 @@ import com.example.buddyfinder_backend.dto.ChatRoomInfoDto;
 import com.example.buddyfinder_backend.dto.ChatRoomMemberDto;
 import com.example.buddyfinder_backend.dto.GroupChatMessageRequest;
 import com.example.buddyfinder_backend.dto.GroupChatMessageResponse;
+import com.example.buddyfinder_backend.dto.GroupTypingEvent;
 import com.example.buddyfinder_backend.entity.*;
 import com.example.buddyfinder_backend.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -220,5 +221,19 @@ public class GroupChatService {
                         .role(m.getRole())
                         .build())
                 .toList();
+    }
+
+    public GroupTypingEvent buildTypingEvent(Long roomId, Long senderId, boolean typing) {
+        ChatRoomMember member = chatRoomMemberRepository
+                .findByChatRoom_IdAndUser_UserId(roomId, senderId)
+                .orElseThrow(() -> new RuntimeException("User is not a member of this room"));
+
+        return GroupTypingEvent.builder()
+                .roomId(roomId)
+                .senderId(senderId)
+                .senderName(member.getUser().getName())
+                .typing(typing)
+                .timestamp(System.currentTimeMillis())
+                .build();
     }
 }

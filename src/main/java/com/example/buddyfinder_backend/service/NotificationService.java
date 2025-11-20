@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -178,8 +179,13 @@ public class NotificationService {
      */
     @Transactional
     public NotificationResponse markAsRead(Long notificationId, Long userId) {
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+        Optional<Notification> notificationOpt = notificationRepository.findById(notificationId);
+        if (notificationOpt.isEmpty()) {
+            log.warn("Notification {} not found when marking as read for user {}", notificationId, userId);
+            return null;
+        }
+
+        Notification notification = notificationOpt.get();
 
         // Security check
         if (!notification.getUser().getUserId().equals(userId)) {

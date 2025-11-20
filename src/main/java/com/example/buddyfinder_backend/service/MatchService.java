@@ -8,6 +8,7 @@ import com.example.buddyfinder_backend.entity.User;
 import com.example.buddyfinder_backend.repository.LikesRepository;
 import com.example.buddyfinder_backend.repository.MatchRepository;
 import com.example.buddyfinder_backend.repository.ProfileRepository;
+import com.example.buddyfinder_backend.repository.RatingRepository;
 import com.example.buddyfinder_backend.repository.UserRepository;
 import com.example.buddyfinder_backend.util.PremiumAccessUtil;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
     private final ProfileRepository profileRepository;
+    private final RatingRepository ratingRepository;
     private final NotificationService notificationService;
 
     public String likeUser(Long fromUserId, Long toUserId) {
@@ -121,6 +123,10 @@ public class MatchService {
             matchDetails.put("fitnessLevel", matchedUser.getFitnessLevel());
             matchDetails.put("matchedAt", match.getMatchedAt());
             matchDetails.put("profilePictureUrl", matchedUser.getProfilePictureUrl());
+            Double avgRating = ratingRepository.getAverageRating(matchedUser.getUserId());
+            Long totalRatings = ratingRepository.countByToUser_UserId(matchedUser.getUserId());
+            matchDetails.put("averageRating", avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : null);
+            matchDetails.put("totalRatings", totalRatings != null ? totalRatings : 0L);
 
             // ADD PHOTOS
             Optional<Profile> profile = profileRepository.findByUser_UserId(matchedUser.getUserId());
@@ -197,6 +203,12 @@ public class MatchService {
         // Add photos from profile
         Optional<Profile> profile = profileRepository.findByUser_UserId(user.getUserId());
         profile.ifPresent(p -> builder.photos(p.getPhotos()));
+
+        Double avgRating = ratingRepository.getAverageRating(user.getUserId());
+        double roundedAvg = avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 0.0;
+        long totalRatings = ratingRepository.countByToUser_UserId(user.getUserId());
+        builder.averageRating(avgRating != null ? roundedAvg : null);
+        builder.totalRatings(totalRatings);
 
         return builder.build();
     }

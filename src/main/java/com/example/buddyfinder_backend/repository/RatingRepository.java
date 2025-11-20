@@ -18,6 +18,8 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     @Query("SELECT AVG(r.rating) FROM Rating r WHERE r.toUser.userId = :userId")
     Double getAverageRating(Long userId);
 
+    long countByToUser_UserId(Long toUserId);
+
     // === 🆕 DELETE METHODS FOR GDPR COMPLIANCE ===
     void deleteByFromUser_UserId(Long fromUserId);
     void deleteByToUser_UserId(Long toUserId);

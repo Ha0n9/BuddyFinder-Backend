@@ -6,6 +6,7 @@ import com.example.buddyfinder_backend.entity.Profile;
 import com.example.buddyfinder_backend.entity.User;
 import com.example.buddyfinder_backend.repository.LikesRepository;
 import com.example.buddyfinder_backend.repository.ProfileRepository;
+import com.example.buddyfinder_backend.repository.RatingRepository;
 import com.example.buddyfinder_backend.repository.UserRepository;
 import com.example.buddyfinder_backend.util.PremiumAccessUtil;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class SearchService {
     private final UserRepository userRepository;
     private final LikesRepository likesRepository;
     private final ProfileRepository profileRepository;
+    private final RatingRepository ratingRepository;
 
     public List<UserResponse> searchBuddies(Long currentUserId, String location, String interests) {
         SearchFilters filters = SearchFilters.builder()
@@ -217,6 +219,12 @@ public class SearchService {
         // Add photos from profile
         Optional<Profile> profile = profileRepository.findByUser_UserId(user.getUserId());
         profile.ifPresent(p -> builder.photos(p.getPhotos()));
+
+        Double avgRating = ratingRepository.getAverageRating(user.getUserId());
+        double roundedAvg = avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 0.0;
+        long totalRatings = ratingRepository.countByToUser_UserId(user.getUserId());
+        builder.averageRating(avgRating != null ? roundedAvg : null);
+        builder.totalRatings(totalRatings);
 
         return builder.build();
     }

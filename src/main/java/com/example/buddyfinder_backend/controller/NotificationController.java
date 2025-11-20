@@ -71,6 +71,9 @@ public class NotificationController {
     ) {
         Long userId = extractUserId(token);
         NotificationResponse notification = notificationService.markAsRead(id, userId);
+        if (notification == null) {
+            return ResponseEntity.notFound().build();
+        }
         return ResponseEntity.ok(notification);
     }
 
