@@ -9,6 +9,7 @@ import com.example.buddyfinder_backend.repository.LikesRepository;
 import com.example.buddyfinder_backend.repository.MatchRepository;
 import com.example.buddyfinder_backend.repository.ProfileRepository;
 import com.example.buddyfinder_backend.repository.UserRepository;
+import com.example.buddyfinder_backend.util.PremiumAccessUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -60,8 +61,8 @@ public class MatchService {
                     match.getMatchId(),
                     fromUser.getName()
             );
-            System.out.println("✅ Match created with ID: " + match.getMatchId());
-            return "It's a match! 🎉";
+            System.out.println("Match created with ID: " + match.getMatchId());
+            return "It's a match!";
         }
 
         return "Like sent!";
@@ -93,7 +94,7 @@ public class MatchService {
                     ? match.getUser2()
                     : match.getUser1();
 
-            matchedUsers.add(mapToUserResponseWithPhotos(matchedUser)); // ✅ CHANGED
+            matchedUsers.add(mapToUserResponseWithPhotos(matchedUser)); // CHANGED
         }
 
         return matchedUsers;
@@ -119,8 +120,9 @@ public class MatchService {
             matchDetails.put("bio", matchedUser.getBio());
             matchDetails.put("fitnessLevel", matchedUser.getFitnessLevel());
             matchDetails.put("matchedAt", match.getMatchedAt());
+            matchDetails.put("profilePictureUrl", matchedUser.getProfilePictureUrl());
 
-            // ✅ ADD PHOTOS
+            // ADD PHOTOS
             Optional<Profile> profile = profileRepository.findByUser_UserId(matchedUser.getUserId());
             profile.ifPresent(p -> matchDetails.put("photos", p.getPhotos()));
 
@@ -178,16 +180,19 @@ public class MatchService {
                 .gender(user.getGender())
                 .interests(user.getInterests())
                 .location(user.getLocation())
+                .latitude(user.getLatitude())
+                .longitude(user.getLongitude())
                 .availability(user.getAvailability())
                 .bio(user.getBio())
                 .tier(user.getTier() != null ? user.getTier().name() : null)
-                .zodiacSign(user.getZodiacSign())
-                .mbtiType(user.getMbtiType())
                 .fitnessLevel(user.getFitnessLevel())
                 .isVerified(user.getIsVerified())
                 .isAdmin(user.getIsAdmin())
+                .isSuperAdmin(user.getIsSuperAdmin())
                 .profilePictureUrl(user.getProfilePictureUrl())
                 .incognitoMode(user.getIncognitoMode());
+
+        PremiumAccessUtil.applyPremiumTraits(user, builder);
 
         // Add photos from profile
         Optional<Profile> profile = profileRepository.findByUser_UserId(user.getUserId());

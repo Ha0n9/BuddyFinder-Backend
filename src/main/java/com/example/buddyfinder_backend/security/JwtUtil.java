@@ -51,7 +51,7 @@ public class JwtUtil {
     }
 
     /**
-     * ✅ NEW: Extract isAdmin from token
+     * NEW: Extract isAdmin from token
      */
     public Boolean extractIsAdmin(String token) {
         try {

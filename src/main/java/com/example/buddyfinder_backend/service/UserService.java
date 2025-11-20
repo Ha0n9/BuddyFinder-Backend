@@ -3,6 +3,7 @@ package com.example.buddyfinder_backend.service;
 import com.example.buddyfinder_backend.dto.UserResponse;
 import com.example.buddyfinder_backend.entity.User;
 import com.example.buddyfinder_backend.repository.*;
+import com.example.buddyfinder_backend.util.PremiumAccessUtil;
 import com.example.buddyfinder_backend.util.SanitizeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -106,6 +107,12 @@ public class UserService {
                 user.setLocation(trimmed);
             }
         }
+        if (updates.containsKey("latitude")) {
+            user.setLatitude(parseCoordinate(updates.get("latitude"), -90, 90, "Latitude"));
+        }
+        if (updates.containsKey("longitude")) {
+            user.setLongitude(parseCoordinate(updates.get("longitude"), -180, 180, "Longitude"));
+        }
         if (updates.containsKey("availability")) {
             Object availabilityObj = updates.get("availability");
             if (availabilityObj instanceof String availability) {
@@ -115,11 +122,20 @@ public class UserService {
         if (updates.containsKey("bio")) {
             user.setBio(SanitizeUtil.sanitize((String) updates.get("bio")));
         }
+        boolean hasPremiumTraits = PremiumAccessUtil.hasAdvancedTraits(user);
         if (updates.containsKey("zodiacSign")) {
-            user.setZodiacSign(SanitizeUtil.sanitize((String) updates.get("zodiacSign")));
+            if (hasPremiumTraits) {
+                user.setZodiacSign(SanitizeUtil.sanitize((String) updates.get("zodiacSign")));
+            } else {
+                user.setZodiacSign(null);
+            }
         }
         if (updates.containsKey("mbtiType")) {
-            user.setMbtiType(SanitizeUtil.sanitize((String) updates.get("mbtiType")));
+            if (hasPremiumTraits) {
+                user.setMbtiType(SanitizeUtil.sanitize((String) updates.get("mbtiType")));
+            } else {
+                user.setMbtiType(null);
+            }
         }
         if (updates.containsKey("fitnessLevel")) {
             user.setFitnessLevel(SanitizeUtil.sanitize((String) updates.get("fitnessLevel")));
@@ -132,6 +148,10 @@ public class UserService {
                 }
                 user.setIncognitoMode(incognito);
             }
+        }
+        if (!hasPremiumTraits) {
+            user.setZodiacSign(null);
+            user.setMbtiType(null);
         }
 
         User savedUser = userRepository.save(user);
@@ -171,145 +191,145 @@ public class UserService {
      */
     @Transactional
     public void deleteUserAccount(Long userId) {
-        log.info("🗑️ ========================================");
-        log.info("🗑️ Starting GDPR-compliant account deletion");
-        log.info("🗑️ User ID: {}", userId);
-        log.info("🗑️ ========================================");
+        log.info("========================================");
+        log.info("Starting GDPR-compliant account deletion");
+        log.info("User ID: {}", userId);
+        log.info("========================================");
 
         try {
             // Verify user exists
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            log.info("👤 User found: {} ({})", user.getName(), user.getEmail());
+            log.info("User found: {} ({})", user.getName(), user.getEmail());
 
             // 1. Delete all matches where user is involved
-            log.info("🔄 Step 1/13: Deleting matches...");
+            log.info("Step 1/13: Deleting matches...");
             try {
                 matchRepository.deleteByUser1_UserIdOrUser2_UserId(userId, userId);
-                log.info("✅ Matches deleted successfully");
+                log.info("Matches deleted successfully");
             } catch (Exception e) {
-                log.warn("⚠️ No matches found or error deleting matches: {}", e.getMessage());
+                log.warn("No matches found or error deleting matches: {}", e.getMessage());
             }
 
             // 2. Delete all messages sent by user
-            log.info("🔄 Step 2/13: Deleting messages...");
+            log.info("Step 2/13: Deleting messages...");
             try {
                 messageRepository.deleteBySender_UserId(userId);
-                log.info("✅ Messages deleted successfully");
+                log.info("Messages deleted successfully");
             } catch (Exception e) {
-                log.warn("⚠️ No messages found or error deleting messages: {}", e.getMessage());
+                log.warn("⚠No messages found or error deleting messages: {}", e.getMessage());
             }
 
             // 3. Delete activity participants
-            log.info("🔄 Step 3/13: Deleting activity participants...");
+            log.info("Step 3/13: Deleting activity participants...");
             try {
                 activityParticipantRepository.deleteByUser_UserId(userId);
-                log.info("✅ Activity participants deleted successfully");
+                log.info("Activity participants deleted successfully");
             } catch (Exception e) {
-                log.warn("⚠️ No activity participants found: {}", e.getMessage());
+                log.warn("No activity participants found: {}", e.getMessage());
             }
 
             // 4. Delete activities created by user
-            log.info("🔄 Step 4/13: Deleting activities...");
+            log.info("Step 4/13: Deleting activities...");
             try {
                 activityRepository.deleteByCreator_UserId(userId);
-                log.info("✅ Activities deleted successfully");
+                log.info("Activities deleted successfully");
             } catch (Exception e) {
-                log.warn("⚠️ No activities found: {}", e.getMessage());
+                log.warn("No activities found: {}", e.getMessage());
             }
 
             // 5. Delete ratings given by user
-            log.info("🔄 Step 5/13: Deleting ratings given...");
+            log.info("Step 5/13: Deleting ratings given...");
             try {
                 ratingRepository.deleteByFromUser_UserId(userId);
-                log.info("✅ Ratings given deleted successfully");
+                log.info("Ratings given deleted successfully");
             } catch (Exception e) {
-                log.warn("⚠️ No ratings given found: {}", e.getMessage());
+                log.warn("No ratings given found: {}", e.getMessage());
             }
 
             // 6. Delete ratings received by user
-            log.info("🔄 Step 6/13: Deleting ratings received...");
+            log.info("Step 6/13: Deleting ratings received...");
             try {
                 ratingRepository.deleteByToUser_UserId(userId);
-                log.info("✅ Ratings received deleted successfully");
+                log.info("Ratings received deleted successfully");
             } catch (Exception e) {
-                log.warn("⚠️ No ratings received found: {}", e.getMessage());
+                log.warn("No ratings received found: {}", e.getMessage());
             }
 
             // 7. Delete notifications
-            log.info("🔄 Step 7/13: Deleting notifications...");
+            log.info("Step 7/13: Deleting notifications...");
             try {
                 notificationRepository.deleteByUser_UserId(userId);
-                log.info("✅ Notifications deleted successfully");
+                log.info("Notifications deleted successfully");
             } catch (Exception e) {
-                log.warn("⚠️ No notifications found: {}", e.getMessage());
+                log.warn("No notifications found: {}", e.getMessage());
             }
 
             // 8. Delete verification requests
-            log.info("🔄 Step 8/13: Deleting verification requests...");
+            log.info("Step 8/13: Deleting verification requests...");
             try {
                 accountVerificationRepository.deleteByUser_UserId(userId);
-                log.info("✅ Verification requests deleted successfully");
+                log.info("Verification requests deleted successfully");
             } catch (Exception e) {
-                log.warn("⚠️ No verification requests found: {}", e.getMessage());
+                log.warn("No verification requests found: {}", e.getMessage());
             }
 
             // 9. Delete refund requests
-            log.info("🔄 Step 9/13: Deleting refund requests...");
+            log.info("Step 9/13: Deleting refund requests...");
             try {
                 refundRepository.deleteByUser_UserId(userId);
-                log.info("✅ Refund requests deleted successfully");
+                log.info("Refund requests deleted successfully");
             } catch (Exception e) {
-                log.warn("⚠️ No refund requests found: {}", e.getMessage());
+                log.warn("No refund requests found: {}", e.getMessage());
             }
 
             // 10. Delete referrals (both as referrer and referred)
-            // ⚠️ FIXED: Changed from deleteByReferee_UserId to deleteByReferred_UserId
-            log.info("🔄 Step 10/13: Deleting referrals...");
+            // FIXED: Changed from deleteByReferee_UserId to deleteByReferred_UserId
+            log.info("Step 10/13: Deleting referrals...");
             try {
                 referralRepository.deleteByReferrer_UserId(userId);
-                referralRepository.deleteByReferred_UserId(userId);  // ✅ CORRECT!
-                log.info("✅ Referrals deleted successfully");
+                referralRepository.deleteByReferred_UserId(userId);  // CORRECT!
+                log.info("Referrals deleted successfully");
             } catch (Exception e) {
-                log.warn("⚠️ No referrals found: {}", e.getMessage());
+                log.warn("No referrals found: {}", e.getMessage());
             }
 
             // 11. Delete likes (both given and received)
-            log.info("🔄 Step 11/13: Deleting likes...");
+            log.info("Step 11/13: Deleting likes...");
             try {
                 likesRepository.deleteByFromUser_UserIdOrToUser_UserId(userId, userId);
-                log.info("✅ Likes deleted successfully");
+                log.info("Likes deleted successfully");
             } catch (Exception e) {
-                log.warn("⚠️ No likes found: {}", e.getMessage());
+                log.warn("No likes found: {}", e.getMessage());
             }
 
             // 12. Delete profile data
-            log.info("🔄 Step 12/13: Deleting profile...");
+            log.info("Step 12/13: Deleting profile...");
             try {
                 profileRepository.deleteByUser_UserId(userId);
-                log.info("✅ Profile deleted successfully");
+                log.info("Profile deleted successfully");
             } catch (Exception e) {
-                log.warn("⚠️ No profile found: {}", e.getMessage());
+                log.warn("No profile found: {}", e.getMessage());
             }
 
             // 13. Finally, delete the user account itself
-            log.info("🔄 Step 13/13: Deleting user account...");
+            log.info("Step 13/13: Deleting user account...");
             userRepository.deleteById(userId);
-            log.info("✅ User account deleted successfully");
+            log.info("User account deleted successfully");
 
-            log.info("🗑️ ========================================");
-            log.info("✅ ACCOUNT DELETION COMPLETED SUCCESSFULLY");
-            log.info("✅ User ID: {} has been permanently removed", userId);
-            log.info("✅ All associated data has been erased (GDPR compliant)");
-            log.info("🗑️ ========================================");
+            log.info("========================================");
+            log.info("ACCOUNT DELETION COMPLETED SUCCESSFULLY");
+            log.info("User ID: {} has been permanently removed", userId);
+            log.info("All associated data has been erased (GDPR compliant)");
+            log.info("========================================");
 
         } catch (Exception e) {
-            log.error("❌ ========================================");
-            log.error("❌ CRITICAL ERROR during account deletion");
-            log.error("❌ User ID: {}", userId);
-            log.error("❌ Error: {}", e.getMessage(), e);
-            log.error("❌ ========================================");
+            log.error("========================================");
+            log.error("CRITICAL ERROR during account deletion");
+            log.error("User ID: {}", userId);
+            log.error("Error: {}", e.getMessage(), e);
+            log.error("========================================");
             throw new RuntimeException("Failed to delete account: " + e.getMessage(), e);
         }
     }
@@ -318,7 +338,7 @@ public class UserService {
      * Map User entity to UserResponse DTO
      */
     private UserResponse mapToUserResponse(User user) {
-        return UserResponse.builder()
+        UserResponse.UserResponseBuilder builder = UserResponse.builder()
                 .userId(user.getUserId())
                 .name(user.getName())
                 .email(user.getEmail())
@@ -326,16 +346,48 @@ public class UserService {
                 .gender(user.getGender())
                 .interests(user.getInterests())
                 .location(user.getLocation())
+                .latitude(user.getLatitude())
+                .longitude(user.getLongitude())
                 .availability(user.getAvailability())
                 .bio(user.getBio())
                 .tier(user.getTier() != null ? user.getTier().name() : null)
-                .zodiacSign(user.getZodiacSign())
-                .mbtiType(user.getMbtiType())
                 .fitnessLevel(user.getFitnessLevel())
                 .isVerified(user.getIsVerified())
                 .isAdmin(user.getIsAdmin())
+                .isSuperAdmin(user.getIsSuperAdmin())
                 .profilePictureUrl(user.getProfilePictureUrl())
-                .incognitoMode(user.getIncognitoMode())
-                .build();
+                .incognitoMode(user.getIncognitoMode());
+
+        PremiumAccessUtil.applyPremiumTraits(user, builder);
+
+        return builder.build();
+    }
+
+    private Float parseCoordinate(Object rawValue, double min, double max, String fieldName) {
+        if (rawValue == null) {
+            return null;
+        }
+        Double numeric = null;
+        if (rawValue instanceof Number number) {
+            numeric = number.doubleValue();
+        } else if (rawValue instanceof String str) {
+            String trimmed = str.trim();
+            if (trimmed.isEmpty()) {
+                return null;
+            }
+            try {
+                numeric = Double.parseDouble(trimmed);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(fieldName + " must be a number");
+            }
+        }
+
+        if (numeric != null) {
+            if (numeric < min || numeric > max) {
+                throw new IllegalArgumentException(fieldName + " must be between " + min + " and " + max);
+            }
+            return numeric.floatValue();
+        }
+        return null;
     }
 }

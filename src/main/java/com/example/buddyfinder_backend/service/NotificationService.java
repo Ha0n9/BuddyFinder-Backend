@@ -50,7 +50,7 @@ public class NotificationService {
                 .build();
 
         Notification saved = notificationRepository.save(notification);
-        log.info("📬 Created notification for user {}: {}", userId, title);
+        log.info("Created notification for user {}: {}", userId, title);
 
         // Send real-time notification via WebSocket
         NotificationResponse response = mapToResponse(saved);
@@ -66,9 +66,9 @@ public class NotificationService {
         try {
             String destination = "/topic/notifications/" + userId;
             messagingTemplate.convertAndSend(destination, notification);
-            log.info("📡 Sent real-time notification to: {}", destination);
+            log.info("Sent real-time notification to: {}", destination);
         } catch (Exception e) {
-            log.error("❌ Failed to send real-time notification", e);
+            log.error("Failed to send real-time notification", e);
         }
     }
 
@@ -79,7 +79,7 @@ public class NotificationService {
         createNotification(
                 userId,
                 Notification.NotificationType.MATCH,
-                "New Match! 🎉",
+                "New Match!",
                 "You matched with " + matchedUserName + "!",
                 matchId,
                 "MATCH"
@@ -93,7 +93,7 @@ public class NotificationService {
         createNotification(
                 userId,
                 Notification.NotificationType.MESSAGE,
-                "New Message 💬",
+                "New Message",
                 senderName + " sent you a message",
                 matchId,
                 "MATCH"
@@ -104,7 +104,7 @@ public class NotificationService {
         createNotification(
                 userId,
                 Notification.NotificationType.MESSAGE,
-                "Group Chat 💬",
+                "Group Chat",
                 senderName + " sent a message in " + (activityTitle != null ? activityTitle : "a group chat"),
                 roomId,
                 "GROUP"
@@ -118,7 +118,7 @@ public class NotificationService {
         createNotification(
                 userId,
                 Notification.NotificationType.ACTIVITY_JOINED,
-                "Activity Update 🏃",
+                "Activity Update",
                 participantName + " joined your activity: " + activityTitle,
                 activityId,
                 "ACTIVITY"
@@ -132,7 +132,7 @@ public class NotificationService {
         createNotification(
                 userId,
                 Notification.NotificationType.RATING_RECEIVED,
-                "New Rating ⭐",
+                "New Rating",
                 raterName + " rated you " + rating + " stars",
                 ratingId,
                 "RATING"
@@ -189,7 +189,7 @@ public class NotificationService {
         notification.setIsRead(true);
         Notification updated = notificationRepository.save(notification);
 
-        log.info("✅ Marked notification {} as read", notificationId);
+        log.info("Marked notification {} as read", notificationId);
         return mapToResponse(updated);
     }
 
@@ -199,7 +199,7 @@ public class NotificationService {
     @Transactional
     public void markAllAsRead(Long userId) {
         notificationRepository.markAllAsReadByUserId(userId);
-        log.info("✅ Marked all notifications as read for user {}", userId);
+        log.info("Marked all notifications as read for user {}", userId);
     }
 
     /**
@@ -216,7 +216,7 @@ public class NotificationService {
         }
 
         notificationRepository.delete(notification);
-        log.info("🗑️ Deleted notification {}", notificationId);
+        log.info("Deleted notification {}", notificationId);
     }
 
     /**
@@ -226,7 +226,7 @@ public class NotificationService {
     public void deleteOldNotifications(int daysOld) {
         LocalDateTime cutoffDate = LocalDateTime.now().minusDays(daysOld);
         notificationRepository.deleteOldNotifications(cutoffDate);
-        log.info("🧹 Cleaned up notifications older than {} days", daysOld);
+        log.info("Cleaned up notifications older than {} days", daysOld);
     }
 
     /**

@@ -3,6 +3,7 @@ package com.example.buddyfinder_backend.service;
 import com.example.buddyfinder_backend.entity.*;
 import com.example.buddyfinder_backend.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class AdminService {
     private final NotificationService notificationService; // ADD THIS
     private final ReportService reportService;
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     public Map<String, Object> getDashboardStats() {
         long totalUsers = userRepository.count();
@@ -50,15 +52,12 @@ public class AdminService {
     }
 
     public User banUser(Long userId, Long adminId, int days, String reason) {
-        User admin = userRepository.findById(adminId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
-
-        if (!admin.getIsAdmin()) {
-            throw new RuntimeException("Unauthorized: Not an admin");
-        }
+        User admin = verifyAdmin(adminId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        ensureCanManageTarget(admin, user);
 
         user.setIsActive(false);
         if (days > 0) {
@@ -93,23 +92,24 @@ public class AdminService {
     }
 
     public User unbanUser(Long userId, Long adminId) {
-        User admin = userRepository.findById(adminId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
-
-        if (!admin.getIsAdmin()) {
-            throw new RuntimeException("Unauthorized: Not an admin");
-        }
+        User admin = verifyAdmin(adminId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        ensureCanManageTarget(admin, user);
+
         user.setIsActive(true);
+        user.setBanUntil(null);
         return userRepository.save(user);
     }
 
     @Transactional
     public void deleteUser(Long userId, Long adminId) {
-        verifyAdmin(adminId);
+        User admin = verifyAdmin(adminId);
+        User target = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        ensureCanManageTarget(admin, target);
         userService.deleteUserAccount(userId);
     }
 
@@ -118,13 +118,7 @@ public class AdminService {
     }
 
     public void deleteActivity(Long activityId, Long adminId) {
-        User admin = userRepository.findById(adminId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
-
-        if (!admin.getIsAdmin()) {
-            throw new RuntimeException("Unauthorized: Not an admin");
-        }
-
+        verifyAdmin(adminId);
         activityRepository.deleteById(activityId);
     }
 
@@ -226,15 +220,117 @@ public class AdminService {
         );
     }
 
+    public List<User> getAdminAccounts(Long requesterId) {
+        verifySuperAdmin(requesterId);
+        return userRepository.findByIsAdminTrue();
+    }
+
+    public User createAdminAccount(Long requesterId, String name, String email, String password, boolean superAdmin) {
+        User requester = verifySuperAdmin(requesterId);
+        if (userRepository.existsByEmail(email)) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        User admin = User.builder()
+                .name(name != null ? name.trim() : "Admin")
+                .email(email.trim().toLowerCase())
+                .password(passwordEncoder.encode(password))
+                .age(25)
+                .isActive(true)
+                .isVerified(true)
+                .isAdmin(true)
+                .isSuperAdmin(superAdmin)
+                .tier(User.TierType.ELITE)
+                .build();
+
+        return userRepository.save(admin);
+    }
+
+    public User updateAdminRole(Long requesterId, Long adminUserId, String role) {
+        User requester = verifySuperAdmin(requesterId);
+        User target = userRepository.findById(adminUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (target.getUserId().equals(requesterId) && !"SUPER_ADMIN".equalsIgnoreCase(role)) {
+            throw new RuntimeException("Super admin cannot downgrade themselves");
+        }
+
+        switch (role == null ? "" : role.toUpperCase()) {
+            case "SUPER_ADMIN" -> {
+                target.setIsAdmin(true);
+                target.setIsSuperAdmin(true);
+            }
+            case "ADMIN" -> {
+                if (Boolean.TRUE.equals(target.getIsSuperAdmin())) {
+                    ensureAnotherSuperAdminExists(target.getUserId());
+                }
+                target.setIsAdmin(true);
+                target.setIsSuperAdmin(false);
+            }
+            default -> {
+                if (Boolean.TRUE.equals(target.getIsSuperAdmin())) {
+                    ensureAnotherSuperAdminExists(target.getUserId());
+                }
+                target.setIsAdmin(false);
+                target.setIsSuperAdmin(false);
+            }
+        }
+
+        return userRepository.save(target);
+    }
+
+    @Transactional
+    public void deleteAdminAccount(Long requesterId, Long adminUserId) {
+        User requester = verifySuperAdmin(requesterId);
+        User target = userRepository.findById(adminUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!Boolean.TRUE.equals(target.getIsAdmin())) {
+            throw new RuntimeException("Target is not an admin");
+        }
+        if (target.getUserId().equals(requesterId)) {
+            throw new RuntimeException("Cannot delete your own admin account");
+        }
+        if (Boolean.TRUE.equals(target.getIsSuperAdmin())) {
+            ensureAnotherSuperAdminExists(target.getUserId());
+        }
+
+        userService.deleteUserAccount(adminUserId);
+    }
+
     private User verifyAdmin(Long adminId) {
         User admin = userRepository.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
 
-        if (!admin.getIsAdmin()) {
+        if (!Boolean.TRUE.equals(admin.getIsAdmin())) {
             throw new RuntimeException("Unauthorized: Not an admin");
         }
 
         return admin;
+    }
+
+    private User verifySuperAdmin(Long adminId) {
+        User admin = verifyAdmin(adminId);
+        if (!Boolean.TRUE.equals(admin.getIsSuperAdmin())) {
+            throw new RuntimeException("Unauthorized: Super admin privileges required");
+        }
+        return admin;
+    }
+
+    private void ensureCanManageTarget(User actor, User target) {
+        if (Boolean.TRUE.equals(target.getIsAdmin()) && !Boolean.TRUE.equals(actor.getIsSuperAdmin())) {
+            throw new RuntimeException("Only super admins can manage other admins");
+        }
+    }
+
+    private void ensureAnotherSuperAdminExists(Long excludedUserId) {
+        long total = userRepository.countByIsSuperAdminTrue();
+        if (total <= 1) {
+            throw new RuntimeException("At least one super admin must remain");
+        }
+        if (!userRepository.existsByIsSuperAdminTrueAndUserIdNot(excludedUserId)) {
+            throw new RuntimeException("Cannot remove the last super admin");
+        }
     }
 
     private Map<String, Object> mapRefundToResponse(Refund refund) {

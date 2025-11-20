@@ -35,7 +35,7 @@ public class VerificationController {
     ) {
         Long userId = extractUserId(token);
 
-        log.info("📝 Verification submission: userId={}, documentType={}", userId, documentType);
+        log.info("Verification submission: userId={}, documentType={}", userId, documentType);
 
         VerificationResponse verification = verificationService.submitVerification(
                 userId, document, documentType);

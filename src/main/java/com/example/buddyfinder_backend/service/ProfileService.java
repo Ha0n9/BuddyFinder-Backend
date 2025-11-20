@@ -64,11 +64,11 @@ public class ProfileService {
 
         // Upload to Cloudinary
         String photoUrl = cloudinaryService.uploadImage(file);
-        System.out.println("✅ Uploaded to Cloudinary: " + photoUrl); // DEBUG
+        System.out.println("Uploaded to Cloudinary: " + photoUrl); // DEBUG
 
         // Get current photos
         List<String> photoList = parsePhotos(profile.getPhotos());
-        System.out.println("📷 Current photos: " + photoList); // DEBUG
+        System.out.println("Current photos: " + photoList); // DEBUG
 
         // Add new photo
         photoList.add(photoUrl);
@@ -84,7 +84,7 @@ public class ProfileService {
         profile.setPhotos(photosJson);
 
         Profile saved = profileRepository.save(profile);
-        System.out.println("💾 Saved photos to DB: " + saved.getPhotos()); // DEBUG
+        System.out.println("Saved photos to DB: " + saved.getPhotos()); // DEBUG
 
         return saved;
     }
@@ -141,7 +141,7 @@ public class ProfileService {
         return profileRepository.save(profile);
     }
 
-    // ✅ Helper: Parse photos from JSON string
+    // Helper: Parse photos from JSON string
     private List<String> parsePhotos(String photosJson) {
         if (photosJson == null || photosJson.isEmpty() || photosJson.equals("null")) {
             return new ArrayList<>();
@@ -158,7 +158,7 @@ public class ProfileService {
                 .collect(Collectors.toList());
     }
 
-    // ✅ Helper: Convert list to JSON array string
+    // Helper: Convert list to JSON array string
     private String toJsonArray(List<String> list) {
         if (list.isEmpty()) {
             return "[]";

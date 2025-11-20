@@ -51,7 +51,7 @@ public class VerificationService {
 
         // Upload document to Cloudinary
         String documentUrl = cloudinaryService.uploadImage(document);
-        log.info("✅ Document uploaded to Cloudinary: {}", documentUrl);
+        log.info("Document uploaded to Cloudinary: {}", documentUrl);
 
         // Create verification request
         AccountVerification verification = AccountVerification.builder()
@@ -62,13 +62,13 @@ public class VerificationService {
                 .build();
 
         AccountVerification saved = verificationRepository.save(verification);
-        log.info("📋 Verification request submitted: ID={}, User={}", saved.getVerificationId(), userId);
+        log.info("Verification request submitted: ID={}, User={}", saved.getVerificationId(), userId);
 
         // Notify user
         notificationService.createNotification(
                 userId,
                 Notification.NotificationType.SYSTEM,
-                "Verification Submitted ✅",
+                "Verification Submitted",
                 "Your verification request has been submitted and is under review",
                 saved.getVerificationId(),
                 "VERIFICATION"
@@ -149,13 +149,13 @@ public class VerificationService {
         userRepository.save(user);
 
         AccountVerification updated = verificationRepository.save(verification);
-        log.info("✅ Verification {} approved by admin {}", verificationId, adminId);
+        log.info("Verification {} approved by admin {}", verificationId, adminId);
 
         // Notify user
         notificationService.createNotification(
                 user.getUserId(),
                 Notification.NotificationType.SYSTEM,
-                "Account Verified! ✅",
+                "Account Verified!",
                 "Congratulations! Your account has been verified. You now have a verified badge on your profile.",
                 verificationId,
                 "VERIFICATION"
@@ -185,13 +185,13 @@ public class VerificationService {
         verification.setAdminNotes(adminNotes != null ? adminNotes : "Verification request rejected");
 
         AccountVerification updated = verificationRepository.save(verification);
-        log.info("❌ Verification {} rejected by admin {}", verificationId, adminId);
+        log.info("Verification {} rejected by admin {}", verificationId, adminId);
 
         // Notify user
         notificationService.createNotification(
                 verification.getUser().getUserId(),
                 Notification.NotificationType.SYSTEM,
-                "Verification Rejected ❌",
+                "Verification Rejected",
                 "Your verification request has been rejected. " +
                         (adminNotes != null ? "Reason: " + adminNotes : "Please submit a clearer document."),
                 verificationId,

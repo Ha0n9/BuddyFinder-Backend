@@ -1,5 +1,6 @@
 package com.example.buddyfinder_backend.controller;
 
+import com.example.buddyfinder_backend.dto.AdminAccountRequest;
 import com.example.buddyfinder_backend.entity.Activity;
 import com.example.buddyfinder_backend.entity.Report;
 import com.example.buddyfinder_backend.entity.User;
@@ -182,8 +183,69 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("message", "Refund rejected successfully"));
     }
 
+    // ============ ADMIN ACCOUNTS (SUPER ADMIN) ============
+
+    @GetMapping("/accounts")
+    public ResponseEntity<List<User>> getAdminAccounts(
+            @RequestHeader("Authorization") String authHeader) {
+        Long adminId = extractUserIdFromToken(authHeader);
+        return ResponseEntity.ok(adminService.getAdminAccounts(adminId));
+    }
+
+    @PostMapping("/accounts")
+    public ResponseEntity<User> createAdminAccount(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody AdminAccountRequest request) {
+        Long adminId = extractUserIdFromToken(authHeader);
+        validateAdminAccountRequest(request, true);
+        boolean makeSuper = "SUPER_ADMIN".equalsIgnoreCase(request.getRole());
+        return ResponseEntity.ok(
+                adminService.createAdminAccount(
+                        adminId,
+                        request.getName(),
+                        request.getEmail(),
+                        request.getPassword(),
+                        makeSuper
+                )
+        );
+    }
+
+    @PutMapping("/accounts/{accountId}/role")
+    public ResponseEntity<User> updateAdminRole(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long accountId,
+            @RequestBody Map<String, String> payload) {
+        Long adminId = extractUserIdFromToken(authHeader);
+        String role = payload.getOrDefault("role", "ADMIN");
+        return ResponseEntity.ok(adminService.updateAdminRole(adminId, accountId, role));
+    }
+
+    @DeleteMapping("/accounts/{accountId}")
+    public ResponseEntity<Map<String, String>> deleteAdminAccount(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long accountId) {
+        Long adminId = extractUserIdFromToken(authHeader);
+        adminService.deleteAdminAccount(adminId, accountId);
+        return ResponseEntity.ok(Map.of("message", "Admin account deleted successfully"));
+    }
+
     private Long extractUserIdFromToken(String authHeader) {
         String token = authHeader.substring(7);
         return jwtUtil.extractUserId(token);
+    }
+
+    private void validateAdminAccountRequest(AdminAccountRequest request, boolean requirePassword) {
+        if (request.getName() == null || request.getName().isBlank()) {
+            throw new IllegalArgumentException("Name is required");
+        }
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+        if (requirePassword && (request.getPassword() == null || request.getPassword().length() < 6)) {
+            throw new IllegalArgumentException("Password must be at least 6 characters");
+        }
+        if (request.getRole() == null) {
+            request.setRole("ADMIN");
+        }
     }
 }

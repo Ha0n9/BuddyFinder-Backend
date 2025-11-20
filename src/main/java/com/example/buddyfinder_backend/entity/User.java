@@ -86,6 +86,9 @@ public class User {
     @Column(nullable = false)
     private Boolean isAdmin = false;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private Boolean isSuperAdmin = false;
+
     // FIX: Add @JsonIgnoreProperties to ALL relationships
     @OneToMany(mappedBy = "fromUser", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties({"fromUser", "toUser"})

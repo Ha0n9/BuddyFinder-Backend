@@ -85,7 +85,7 @@ public class UserController {
 
             // Verify password for security
             if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                log.warn("❌ Invalid password for account deletion attempt - userId: {}", userId);
+                log.warn("Invalid password for account deletion attempt - userId: {}", userId);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("message", "Invalid password"));
             }
@@ -93,7 +93,7 @@ public class UserController {
             // Delete user account and all related data (GDPR compliant)
             userService.deleteUserAccount(userId);
 
-            log.info("✅ Account successfully deleted - userId: {}", userId);
+            log.info("Account successfully deleted - userId: {}", userId);
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Account deleted successfully. All your data has been permanently removed.");
@@ -101,11 +101,11 @@ public class UserController {
             return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
-            log.error("❌ Validation error during account deletion", e);
+            log.error("Validation error during account deletion", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
-            log.error("❌ Error deleting account", e);
+            log.error("Error deleting account", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to delete account. Please try again later."));
         }

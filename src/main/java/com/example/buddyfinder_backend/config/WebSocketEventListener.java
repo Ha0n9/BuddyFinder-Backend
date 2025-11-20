@@ -17,11 +17,11 @@ public class WebSocketEventListener {
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
-        log.info("✅ New WebSocket connection");
+        log.info("New WebSocket connection");
     }
 
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
-        log.info("❌ WebSocket connection closed");
+        log.info("WebSocket connection closed");
     }
 }

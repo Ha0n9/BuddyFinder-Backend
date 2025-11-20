@@ -17,6 +17,8 @@ public class UserResponse {
     private String gender;
     private String interests;
     private String location;
+    private Float latitude;
+    private Float longitude;
     private String availability;
     private String bio;
     private String tier;
@@ -25,6 +27,7 @@ public class UserResponse {
     private String fitnessLevel;
     private Boolean isVerified;
     private Boolean isAdmin;
+    private Boolean isSuperAdmin;
     private String photos;
     private String profilePictureUrl;
     private Boolean incognitoMode;

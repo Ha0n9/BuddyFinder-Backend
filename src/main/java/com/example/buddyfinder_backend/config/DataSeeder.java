@@ -1,4 +1,3 @@
-//// Create seed data for testing
 //package com.example.buddyfinder_backend.config;
 //
 //import com.example.buddyfinder_backend.entity.User;
@@ -9,8 +8,8 @@
 //import org.springframework.context.annotation.Configuration;
 //import org.springframework.security.crypto.password.PasswordEncoder;
 //
-//import java.util.Arrays;
 //import java.util.List;
+//import java.util.stream.Collectors;
 //
 //@Configuration
 //@RequiredArgsConstructor
@@ -19,250 +18,302 @@
 //    private final UserRepository userRepository;
 //    private final PasswordEncoder passwordEncoder;
 //
+//    private static final List<SeedUser> DEFAULT_USERS = List.of(
+//            new SeedUser(
+//                    "Sarah Johnson",
+//                    "sarah@example.com",
+//                    "123456",
+//                    25,
+//                    "Female",
+//                    "Yoga, Pilates, Running",
+//                    "Vancouver, BC",
+//                    49.2827,
+//                    -123.1207,
+//                    "Weekday mornings (6-9 AM)",
+//                    "Yoga enthusiast looking for mindful workout buddies.",
+//                    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
+//                    User.TierType.FREE,
+//                    "Gemini",
+//                    "ENFP",
+//                    "Intermediate",
+//                    false,
+//                    false,
+//                    false
+//            ),
+//            new SeedUser(
+//                    "Mike Chen",
+//                    "mike@example.com",
+//                    "123456",
+//                    28,
+//                    "Male",
+//                    "Weight lifting, Boxing, Gym",
+//                    "Toronto, ON",
+//                    43.65107,
+//                    -79.347015,
+//                    "Weekday evenings (6-9 PM)",
+//                    "Strength coach who loves sharing form tips.",
+//                    "https://images.unsplash.com/photo-1502767089025-6572583495b0",
+//                    User.TierType.PREMIUM,
+//                    "Leo",
+//                    "ISTJ",
+//                    "Advanced",
+//                    true,
+//                    false,
+//                    false
+//            ),
+//            new SeedUser(
+//                    "Emma Wilson",
+//                    "emma@example.com",
+//                    "123456",
+//                    23,
+//                    "Female",
+//                    "Running, Cycling, Swimming",
+//                    "Ha Noi, Vietnam",
+//                    21.027763,
+//                    105.83416,
+//                    "Weekend mornings (7-10 AM)",
+//                    "Marathon runner training for her next race.",
+//                    "https://images.unsplash.com/photo-1544723795-3fb6469f5b39",
+//                    User.TierType.FREE,
+//                    "Virgo",
+//                    "INFJ",
+//                    "Advanced",
+//                    false,
+//                    false,
+//                    false
+//            ),
+//            new SeedUser(
+//                    "David Park",
+//                    "david@example.com",
+//                    "123456",
+//                    30,
+//                    "Male",
+//                    "CrossFit, HIIT, Running",
+//                    "Vancouver, BC",
+//                    49.246292,
+//                    -123.116226,
+//                    "Early mornings (5-7 AM)",
+//                    "CrossFit junkie searching for accountability partners.",
+//                    "https://images.unsplash.com/photo-1503467913725-8484b65b0715",
+//                    User.TierType.ELITE,
+//                    "Scorpio",
+//                    "ENTJ",
+//                    "Advanced",
+//                    true,
+//                    false,
+//                    false
+//            ),
+//            new SeedUser(
+//                    "Lisa Anderson",
+//                    "lisa@example.com",
+//                    "123456",
+//                    27,
+//                    "Female",
+//                    "Pilates, Barre, Stretching",
+//                    "Toronto, ON",
+//                    43.642567,
+//                    -79.387054,
+//                    "Weekday lunch breaks",
+//                    "Office worker squeezing in low-impact sessions downtown.",
+//                    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
+//                    User.TierType.FREE,
+//                    "Libra",
+//                    "ISFJ",
+//                    "Beginner",
+//                    false,
+//                    false,
+//                    false
+//            ),
+//            new SeedUser(
+//                    "Kevin Tran",
+//                    "kevin@example.com",
+//                    "123456",
+//                    26,
+//                    "Male",
+//                    "Muay Thai, Calisthenics, Swimming",
+//                    "Ho Chi Minh City, Vietnam",
+//                    10.823099,
+//                    106.629662,
+//                    "Late nights (8-10 PM)",
+//                    "Night owl who loves intense cardio sessions.",
+//                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
+//                    User.TierType.PREMIUM,
+//                    "Aquarius",
+//                    "ENTP",
+//                    "Advanced",
+//                    true,
+//                    false,
+//                    false
+//            ),
+//            new SeedUser(
+//                    "Olivia Brown",
+//                    "olivia@example.com",
+//                    "123456",
+//                    29,
+//                    "Female",
+//                    "Spin, Strength Training, Hiking",
+//                    "New York, NY",
+//                    40.7128,
+//                    -74.0060,
+//                    "Weekend afternoons",
+//                    "Corporate professional seeking balanced workouts.",
+//                    "https://images.unsplash.com/photo-1521572267360-ee0c2909d518",
+//                    User.TierType.FREE,
+//                    "Capricorn",
+//                    "ENFJ",
+//                    "Intermediate",
+//                    true,
+//                    false,
+//                    false
+//            ),
+//            new SeedUser(
+//                    "Ethan Lee",
+//                    "ethan@example.com",
+//                    "123456",
+//                    32,
+//                    "Male",
+//                    "Cycling, Trail Running, Yoga",
+//                    "San Francisco, CA",
+//                    37.7749,
+//                    -122.4194,
+//                    "Flexible evenings",
+//                    "Product designer obsessed with Strava segments.",
+//                    "https://images.unsplash.com/photo-1504593811423-6dd665756598",
+//                    User.TierType.PREMIUM,
+//                    "Sagittarius",
+//                    "INTP",
+//                    "Intermediate",
+//                    true,
+//                    false,
+//                    false
+//            ),
+//            new SeedUser(
+//                    "Ava Patel",
+//                    "ava@example.com",
+//                    "123456",
+//                    24,
+//                    "Female",
+//                    "Dance, Barre, Functional Fitness",
+//                    "Seattle, WA",
+//                    47.6062,
+//                    -122.3321,
+//                    "Weekday evenings",
+//                    "Former dancer transitioning into strength work.",
+//                    "https://images.unsplash.com/photo-1517841905240-472988babdf9",
+//                    User.TierType.FREE,
+//                    "Pisces",
+//                    "ISFP",
+//                    "Beginner",
+//                    false,
+//                    false,
+//                    false
+//            ),
+//            new SeedUser(
+//                    "Noah Kim",
+//                    "noah@example.com",
+//                    "123456",
+//                    31,
+//                    "Male",
+//                    "Powerlifting, Mobility, Swimming",
+//                    "Seoul, South Korea",
+//                    37.5665,
+//                    126.9780,
+//                    "Early mornings",
+//                    "Powerlifter adding mobility and recovery partners.",
+//                    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
+//                    User.TierType.ELITE,
+//                    "Taurus",
+//                    "ISTP",
+//                    "Advanced",
+//                    true,
+//                    false,
+//                    false
+//            ),
+//            new SeedUser(
+//                    "Chloe Nguyen",
+//                    "chloe@example.com",
+//                    "123456",
+//                    22,
+//                    "Female",
+//                    "Swimming, Yoga, Meditation",
+//                    "Ha Noi, Vietnam",
+//                    21.0409,
+//                    105.8342,
+//                    "Weekday afternoons",
+//                    "Student balancing classes with mindful movement.",
+//                    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
+//                    User.TierType.FREE,
+//                    "Cancer",
+//                    "INFP",
+//                    "Beginner",
+//                    false,
+//                    false,
+//                    false
+//            )
+//    );
+//
 //    @Bean
 //    public CommandLineRunner seedData() {
 //        return args -> {
-//            // Check if data already exists
-//            if (userRepository.count() > 20) {
-//                System.out.println("Data already seeded!");
+//            long existingUsers = userRepository.count();
+//            if (existingUsers > 0) {
+//                System.out.printf("Skipping seeding: %d users already exist.%n", existingUsers);
 //                return;
 //            }
 //
-//            System.out.println("Seeding database with dummy users...");
-//
-//            List<User> users = Arrays.asList(
-//                    User.builder()
-//                            .name("Sarah Johnson")
-//                            .email("sarah@example.com")
-//                            .password(passwordEncoder.encode("123456"))
-//                            .age(25)
-//                            .gender("Female")
-//                            .interests("Yoga, Pilates, Running")
-//                            .location("Vancouver")
-//                            .availability(true)
-//                            .bio("Yoga enthusiast 🧘‍♀️ Looking for workout buddies!")
-//                            .tier(User.TierType.FREE)
-//                            .zodiacSign("Gemini")
-//                            .mbtiType("ENFP")
-//                            .fitnessLevel("Intermediate")
-//                            .isActive(true)
-//                            .isVerified(false)
-//                            .isAdmin(false)
-//                            .build(),
-//
-//                    User.builder()
-//                            .name("Mike Chen")
-//                            .email("mike@example.com")
-//                            .password(passwordEncoder.encode("123456"))
-//                            .age(28)
-//                            .gender("Male")
-//                            .interests("Weight lifting, Boxing, Gym")
-//                            .location("Toronto")
-//                            .availability(true)
-//                            .bio("Gym rat 💪 Let's lift together!")
-//                            .tier(User.TierType.PREMIUM)
-//                            .zodiacSign("Leo")
-//                            .mbtiType("ISTJ")
-//                            .fitnessLevel("Advanced")
-//                            .isActive(true)
-//                            .isVerified(true)
-//                            .isAdmin(false)
-//                            .build(),
-//
-//                    User.builder()
-//                            .name("Emma Wilson")
-//                            .email("emma@example.com")
-//                            .password(passwordEncoder.encode("123456"))
-//                            .age(23)
-//                            .gender("Female")
-//                            .interests("Running, Cycling, Swimming")
-//                            .location("Ha Noi")
-//                            .availability(true)
-//                            .bio("Marathon runner 🏃‍♀️ Training for my next race!")
-//                            .tier(User.TierType.FREE)
-//                            .zodiacSign("Virgo")
-//                            .mbtiType("INFJ")
-//                            .fitnessLevel("Advanced")
-//                            .isActive(true)
-//                            .isVerified(false)
-//                            .isAdmin(false)
-//                            .build(),
-//
-//                    User.builder()
-//                            .name("David Park")
-//                            .email("david@example.com")
-//                            .password(passwordEncoder.encode("123456"))
-//                            .age(30)
-//                            .gender("Male")
-//                            .interests("CrossFit, Gym, Running")
-//                            .location("Vancouver")
-//                            .availability(true)
-//                            .bio("CrossFit junkie! WOD partner needed 🏋️")
-//                            .tier(User.TierType.ELITE)
-//                            .zodiacSign("Scorpio")
-//                            .mbtiType("ENTJ")
-//                            .fitnessLevel("Advanced")
-//                            .isActive(true)
-//                            .isVerified(true)
-//                            .isAdmin(false)
-//                            .build(),
-//
-//                    User.builder()
-//                            .name("Lisa Anderson")
-//                            .email("lisa@example.com")
-//                            .password(passwordEncoder.encode("123456"))
-//                            .age(26)
-//                            .gender("Female")
-//                            .interests("Yoga, Meditation, Hiking")
-//                            .location("Ha Noi")
-//                            .availability(true)
-//                            .bio("Wellness coach 🌿 Mind & body balance")
-//                            .tier(User.TierType.FREE)
-//                            .zodiacSign("Pisces")
-//                            .mbtiType("INFP")
-//                            .fitnessLevel("Intermediate")
-//                            .isActive(true)
-//                            .isVerified(false)
-//                            .isAdmin(false)
-//                            .build(),
-//
-//                    User.builder()
-//                            .name("Alex Martinez")
-//                            .email("alex@example.com")
-//                            .password(passwordEncoder.encode("123456"))
-//                            .age(27)
-//                            .gender("Male")
-//                            .interests("Basketball, Gym, Swimming")
-//                            .location("Toronto")
-//                            .availability(true)
-//                            .bio("Basketball player 🏀 Pickup games on weekends!")
-//                            .tier(User.TierType.PREMIUM)
-//                            .zodiacSign("Aries")
-//                            .mbtiType("ESTP")
-//                            .fitnessLevel("Advanced")
-//                            .isActive(true)
-//                            .isVerified(true)
-//                            .isAdmin(false)
-//                            .build(),
-//
-//                    User.builder()
-//                            .name("Sophie Taylor")
-//                            .email("sophie@example.com")
-//                            .password(passwordEncoder.encode("123456"))
-//                            .age(24)
-//                            .gender("Female")
-//                            .interests("Dance, Zumba, Cardio")
-//                            .location("Vancouver")
-//                            .availability(true)
-//                            .bio("Dance fitness instructor 💃 Let's dance!")
-//                            .tier(User.TierType.FREE)
-//                            .zodiacSign("Libra")
-//                            .mbtiType("ESFP")
-//                            .fitnessLevel("Intermediate")
-//                            .isActive(true)
-//                            .isVerified(false)
-//                            .isAdmin(false)
-//                            .build(),
-//
-//                    User.builder()
-//                            .name("Ryan Thompson")
-//                            .email("ryan@example.com")
-//                            .password(passwordEncoder.encode("123456"))
-//                            .age(29)
-//                            .gender("Male")
-//                            .interests("Rock climbing, Hiking, Gym")
-//                            .location("Ha Noi")
-//                            .availability(true)
-//                            .bio("Adventure seeker 🧗 Climbing partner wanted!")
-//                            .tier(User.TierType.FREE)
-//                            .zodiacSign("Sagittarius")
-//                            .mbtiType("ENFJ")
-//                            .fitnessLevel("Advanced")
-//                            .isActive(true)
-//                            .isVerified(false)
-//                            .isAdmin(false)
-//                            .build(),
-//
-//                    User.builder()
-//                            .name("Olivia Brown")
-//                            .email("olivia@example.com")
-//                            .password(passwordEncoder.encode("123456"))
-//                            .age(22)
-//                            .gender("Female")
-//                            .interests("Tennis, Gym, Running")
-//                            .location("Toronto")
-//                            .availability(true)
-//                            .bio("Tennis player 🎾 Looking for doubles partner!")
-//                            .tier(User.TierType.PREMIUM)
-//                            .zodiacSign("Taurus")
-//                            .mbtiType("ISFJ")
-//                            .fitnessLevel("Intermediate")
-//                            .isActive(true)
-//                            .isVerified(true)
-//                            .isAdmin(false)
-//                            .build(),
-//
-//                    User.builder()
-//                            .name("James Lee")
-//                            .email("james@example.com")
-//                            .password(passwordEncoder.encode("123456"))
-//                            .age(31)
-//                            .gender("Male")
-//                            .interests("Martial arts, Boxing, Gym")
-//                            .location("Vancouver")
-//                            .availability(true)
-//                            .bio("MMA fighter 🥊 Training partners welcome!")
-//                            .tier(User.TierType.ELITE)
-//                            .zodiacSign("Capricorn")
-//                            .mbtiType("ISTP")
-//                            .fitnessLevel("Advanced")
-//                            .isActive(true)
-//                            .isVerified(true)
-//                            .isAdmin(false)
-//                            .build(),
-//
-//                    User.builder()
-//                            .name("Mia Garcia")
-//                            .email("mia@example.com")
-//                            .password(passwordEncoder.encode("123456"))
-//                            .age(25)
-//                            .gender("Female")
-//                            .interests("Cycling, Running, Triathlon")
-//                            .location("Ha Noi")
-//                            .availability(true)
-//                            .bio("Triathlete 🚴‍♀️ Training for Ironman!")
-//                            .tier(User.TierType.FREE)
-//                            .zodiacSign("Cancer")
-//                            .mbtiType("INTJ")
-//                            .fitnessLevel("Advanced")
-//                            .isActive(true)
-//                            .isVerified(false)
-//                            .isAdmin(false)
-//                            .build(),
-//
-//                    User.builder()
-//                            .name("Chris Wang")
-//                            .email("chris@example.com")
-//                            .password(passwordEncoder.encode("123456"))
-//                            .age(26)
-//                            .gender("Male")
-//                            .interests("Gym, Bodybuilding, Nutrition")
-//                            .location("Toronto")
-//                            .availability(true)
-//                            .bio("Bodybuilder 💪 Nutrition coach available!")
-//                            .tier(User.TierType.PREMIUM)
-//                            .zodiacSign("Aquarius")
-//                            .mbtiType("ENTP")
-//                            .fitnessLevel("Advanced")
-//                            .isActive(true)
-//                            .isVerified(true)
-//                            .isAdmin(false)
-//                            .build()
-//            );
+//            List<User> users = DEFAULT_USERS.stream()
+//                    .map(seedUser -> seedUser.toEntity(passwordEncoder))
+//                    .collect(Collectors.toList());
 //
 //            userRepository.saveAll(users);
-//            System.out.println("✅ Successfully seeded " + users.size() + " users!");
-//            System.out.println("🔑 All users have password: 123456");
+//            System.out.printf("Seeded %d users (default password: 123456)%n", users.size());
 //        };
+//    }
+//
+//    private record SeedUser(
+//            String name,
+//            String email,
+//            String password,
+//            Integer age,
+//            String gender,
+//            String interests,
+//            String location,
+//            Double latitude,
+//            Double longitude,
+//            String availability,
+//            String bio,
+//            String profilePictureUrl,
+//            User.TierType tier,
+//            String zodiacSign,
+//            String mbtiType,
+//            String fitnessLevel,
+//            boolean verified,
+//            boolean admin,
+//            boolean isSuperAdmin
+//    ) {
+//        User toEntity(PasswordEncoder passwordEncoder) {
+//            return User.builder()
+//                    .name(name)
+//                    .email(email.toLowerCase())
+//                    .password(passwordEncoder.encode(password))
+//                    .age(age)
+//                    .gender(gender)
+//                    .interests(interests)
+//                    .location(location)
+//                    .latitude(latitude != null ? latitude.floatValue() : null)
+//                    .longitude(longitude != null ? longitude.floatValue() : null)
+//                    .availability(availability)
+//                    .bio(bio)
+//                    .profilePictureUrl(profilePictureUrl)
+//                    .tier(tier)
+//                    .zodiacSign(zodiacSign)
+//                    .mbtiType(mbtiType)
+//                    .fitnessLevel(fitnessLevel)
+//                    .isVerified(verified)
+//                    .isAdmin(admin)
+//                    .isActive(true)
+//                    .isSuperAdmin(isSuperAdmin)
+//                    .build();
+//        }
 //    }
 //}

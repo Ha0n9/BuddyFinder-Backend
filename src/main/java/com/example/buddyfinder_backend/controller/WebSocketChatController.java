@@ -1,6 +1,7 @@
 package com.example.buddyfinder_backend.controller;
 
 import com.example.buddyfinder_backend.dto.ChatMessage;
+import com.example.buddyfinder_backend.dto.ChatTypingEvent;
 import com.example.buddyfinder_backend.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +25,7 @@ public class WebSocketChatController {
             @DestinationVariable Long matchId,
             Map<String, Object> payload) {
 
-        log.info("📨 Received WebSocket message for match {}: {}", matchId, payload);
+        log.info("Received WebSocket message for match {}: {}", matchId, payload);
 
         try {
             Long senderId = Long.valueOf(payload.get("senderId").toString());
@@ -33,16 +34,39 @@ public class WebSocketChatController {
             // Save message to database
             ChatMessage message = messageService.sendMessage(matchId, senderId, content);
 
-            log.info("💾 Message saved: {}", message);
+            log.info("Message saved: {}", message);
 
-            // ✅ FIX: Broadcast to ALL subscribers of this match
+            // FIX: Broadcast to ALL subscribers of this match
             String destination = "/topic/match/" + matchId;
             messagingTemplate.convertAndSend(destination, message);
 
-            log.info("📡 Broadcasted message to: {}", destination);
+            log.info("Broadcasted message to: {}", destination);
 
         } catch (Exception e) {
-            log.error("❌ Error handling chat message: ", e);
+            log.error("Error handling chat message: ", e);
+        }
+    }
+
+    @MessageMapping("/chat/{matchId}/typing")
+    public void handleTypingIndicator(
+            @DestinationVariable Long matchId,
+            Map<String, Object> payload) {
+
+        try {
+            Long senderId = Long.valueOf(payload.get("senderId").toString());
+            boolean typing = Boolean.parseBoolean(String.valueOf(payload.getOrDefault("typing", true)));
+
+            ChatTypingEvent event = ChatTypingEvent.builder()
+                    .matchId(matchId)
+                    .senderId(senderId)
+                    .typing(typing)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            String destination = "/topic/match/" + matchId + "/typing";
+            messagingTemplate.convertAndSend(destination, event);
+        } catch (Exception e) {
+            log.error("Error handling typing indicator message: ", e);
         }
     }
 }

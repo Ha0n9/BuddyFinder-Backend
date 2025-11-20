@@ -127,9 +127,8 @@ public class ReferralService {
                 .build();
 
         Referral saved = referralRepository.save(referral);
-        log.info("📧 Invite sent: {} invited {}", referrer.getEmail(), friendEmail);
+        log.info("Invite sent: {} invited {}", referrer.getEmail(), friendEmail);
 
-        // TODO: Send email invitation to friendEmail
         // sendInvitationEmail(friendEmail, referralCode, referrer.getName());
 
         return saved;
@@ -148,7 +147,7 @@ public class ReferralService {
         List<Referral> referralsByCode = referralRepository.findAllByReferralCode(trimmedCode);
 
         if (referralsByCode.isEmpty()) {
-            log.warn("⚠️ Referral signup attempted with invalid code: {}", referralCode);
+            log.warn("Referral signup attempted with invalid code: {}", referralCode);
             return; // Do not block registration if code is invalid
         }
 
@@ -188,13 +187,13 @@ public class ReferralService {
             referralRepository.save(newReferral);
         }
 
-        log.info("✅ Referral accepted: {} signed up using code {}", newUser.getEmail(), trimmedCode);
+        log.info("Referral accepted: {} signed up using code {}", newUser.getEmail(), trimmedCode);
 
         // Notify referrer
         notificationService.createNotification(
                 referrerHolder.getReferrer().getUserId(),
                 Notification.NotificationType.SYSTEM,
-                "Friend Joined! 🎉",
+                "Friend Joined!",
                 newUser.getName() + " just signed up using your referral link!",
                 newUserId,
                 "REFERRAL"
@@ -211,7 +210,7 @@ public class ReferralService {
             notificationService.createNotification(
                     referrerHolder.getReferrer().getUserId(),
                     Notification.NotificationType.SYSTEM,
-                    "Claim Your Reward! 🎁",
+                    "Claim Your Reward!",
                     "You've referred 3 friends! Claim your FREE month of Premium now!",
                     referrerHolder.getReferrer().getUserId(),
                     "REWARD"
@@ -242,7 +241,6 @@ public class ReferralService {
         if (user.getTier() == User.TierType.FREE) {
             user.setTier(User.TierType.PREMIUM);
         }
-        // TODO: Set premium expiry date (1 month from now)
 
         userRepository.save(user);
 
@@ -257,13 +255,13 @@ public class ReferralService {
                     referralRepository.save(r);
                 });
 
-        log.info("🎁 Reward claimed: User {} upgraded to Premium", userId);
+        log.info("Reward claimed: User {} upgraded to Premium", userId);
 
         // Notify user
         notificationService.createNotification(
                 userId,
                 Notification.NotificationType.SYSTEM,
-                "Premium Activated! 🎉",
+                "Premium Activated!",
                 "Your FREE month of Premium has been activated! Enjoy all premium features.",
                 userId,
                 "REWARD"

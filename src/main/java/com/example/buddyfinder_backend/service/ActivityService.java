@@ -36,7 +36,7 @@ public class ActivityService {
         activity.setCurrentCount(1);
         activity.setIsCancelled(false); // ensure DB not-null constraint satisfied
 
-        // ❌ Removed: activity.setCancelled(false);
+        // Removed: activity.setCancelled(false);
         // Because your Activity entity does NOT contain a "cancelled" field
 
         // Save activity first
@@ -50,7 +50,7 @@ public class ActivityService {
                 .build();
         activityParticipantRepository.save(creatorParticipant);
 
-        // 🔥 Create group chat room associated with this activity
+        // Create group chat room associated with this activity
         groupChatService.createRoomForActivity(savedActivity.getActivityId(), creatorId);
 
         return savedActivity;

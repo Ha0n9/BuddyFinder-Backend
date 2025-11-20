@@ -26,28 +26,19 @@ public class MessageService {
     private final NotificationService notificationService;
 
     public ChatMessage sendMessage(Long matchId, Long senderId, String content) {
-        log.info("💬 MessageService.sendMessage called");
-        log.info("   matchId: {}, senderId: {}, content: '{}'", matchId, senderId, content);
-
         try {
-            log.info("🔍 Finding match...");
             Match match = matchRepository.findById(matchId)
                     .orElseThrow(() -> new RuntimeException("Match not found"));
-            log.info("✅ Match found: {}", match.getMatchId());
 
-            log.info("🔍 Finding sender...");
             User sender = userRepository.findById(senderId)
                     .orElseThrow(() -> new RuntimeException("Sender not found"));
-            log.info("✅ Sender found: {}", sender.getName());
 
             // Determine receiver
             User receiver = match.getUser1().getUserId().equals(senderId)
                     ? match.getUser2()
                     : match.getUser1();
-            log.info("📮 Receiver: {}", receiver.getName());
 
             // Save message
-            log.info("💾 Building message entity...");
             Message message = Message.builder()
                     .match(match)
                     .sender(sender)
@@ -56,9 +47,7 @@ public class MessageService {
                     .isDeleted(false)
                     .build();
 
-            log.info("💾 Saving to database...");
             Message savedMessage = messageRepository.save(message);
-            log.info("✅ Message saved with ID: {}", savedMessage.getMessageId());
 
             try {
                 notificationService.notifyNewMessage(
@@ -66,19 +55,17 @@ public class MessageService {
                         matchId,
                         sender.getName()
                 );
-                log.info("✅ Notification sent");
+                log.info("Notification sent");
             } catch (Exception e) {
-                log.error("⚠️ Failed to send notification (non-critical): {}", e.getMessage());
+                log.error("Failed to send notification (non-critical): {}", e.getMessage());
             }
 
-            log.info("🔄 Mapping to ChatMessage DTO...");
             ChatMessage chatMessage = mapToChatMessage(savedMessage);
-            log.info("✅ ChatMessage created: {}", chatMessage);
 
             return chatMessage;
 
         } catch (Exception e) {
-            log.error("❌ Error in MessageService.sendMessage:", e);
+            log.error("Error in MessageService.sendMessage:", e);
             throw e;
         }
     }
@@ -94,7 +81,7 @@ public class MessageService {
         }
 
         List<Message> messages = messageRepository.findByMatch_MatchIdOrderByTimestampAsc(matchId);
-        log.info("📬 Retrieved {} messages for match {}", messages.size(), matchId);
+        log.info("Retrieved {} messages for match {}", messages.size(), matchId);
 
         // Mark messages as read for this user
         messages.stream()
@@ -116,7 +103,7 @@ public class MessageService {
     }
 
     private ChatMessage mapToChatMessage(Message message) {
-        log.debug("🔄 Mapping Message ID {} to ChatMessage", message.getMessageId());
+        log.debug("Mapping Message ID {} to ChatMessage", message.getMessageId());
 
         ChatMessage chatMessage = ChatMessage.builder()
                 .messageId(message.getMessageId())
@@ -130,7 +117,7 @@ public class MessageService {
                 .isRead(message.getIsRead())
                 .build();
 
-        log.debug("✅ Mapped to ChatMessage: {}", chatMessage);
+        log.debug("Mapped to ChatMessage: {}", chatMessage);
         return chatMessage;
     }
 }

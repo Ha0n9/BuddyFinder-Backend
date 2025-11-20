@@ -4,6 +4,7 @@ import com.example.buddyfinder_backend.dto.*;
 import com.example.buddyfinder_backend.entity.User;
 import com.example.buddyfinder_backend.repository.UserRepository;
 import com.example.buddyfinder_backend.security.JwtUtil;
+import com.example.buddyfinder_backend.util.PremiumAccessUtil;
 import com.example.buddyfinder_backend.util.SanitizeUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -49,6 +50,8 @@ public class AuthService {
                 .interests(sanitizedInterests)
                 .location(normalizedLocation)
                 .availability(sanitizedAvailability)
+                .latitude(toNullableFloat(request.getLatitude()))
+                .longitude(toNullableFloat(request.getLongitude()))
                 .tier(User.TierType.FREE)
                 .isActive(true)
                 .isVerified(false)
@@ -104,7 +107,7 @@ public class AuthService {
     }
 
     private UserResponse mapToUserResponse(User user) {
-        return UserResponse.builder()
+        UserResponse.UserResponseBuilder builder = UserResponse.builder()
                 .userId(user.getUserId())
                 .name(user.getName())
                 .email(user.getEmail())
@@ -112,16 +115,24 @@ public class AuthService {
                 .gender(user.getGender())
                 .interests(user.getInterests())
                 .location(user.getLocation())
+                .latitude(user.getLatitude())
+                .longitude(user.getLongitude())
                 .availability(user.getAvailability())
                 .bio(user.getBio())
                 .tier(user.getTier() != null ? user.getTier().name() : null)
-                .zodiacSign(user.getZodiacSign())
-                .mbtiType(user.getMbtiType())
                 .fitnessLevel(user.getFitnessLevel())
                 .isVerified(user.getIsVerified())
                 .isAdmin(user.getIsAdmin())
+                .isSuperAdmin(user.getIsSuperAdmin())
                 .incognitoMode(user.getIncognitoMode())
-                .profilePictureUrl(user.getProfilePictureUrl())
-                .build();
+                .profilePictureUrl(user.getProfilePictureUrl());
+
+        PremiumAccessUtil.applyPremiumTraits(user, builder);
+
+        return builder.build();
+    }
+
+    private Float toNullableFloat(Double value) {
+        return value != null ? value.floatValue() : null;
     }
 }

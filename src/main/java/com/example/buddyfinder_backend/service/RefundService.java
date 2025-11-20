@@ -55,7 +55,7 @@ public class RefundService {
                 .build();
 
         Refund saved = refundRepository.save(refund);
-        log.info("💰 Refund request created: ID={}, User={}, Amount={}",
+        log.info("Refund request created: ID={}, User={}, Amount={}",
                 saved.getRefundId(), userId, request.getOriginalAmount());
 
         // Notify user
@@ -68,7 +68,6 @@ public class RefundService {
                 "REFUND"
         );
 
-        // TODO: Notify admins about new refund request
         notifyAdminsAboutNewRefund(saved);
 
         return mapToResponse(saved);
@@ -128,7 +127,7 @@ public class RefundService {
             refund.setProcessedBy(admin);
             refund.setAdminNotes(request.getAdminNotes());
 
-            log.info("✅ Refund {} approved by admin {}", refundId, adminId);
+            log.info("Refund {} approved by admin {}", refundId, adminId);
 
             // Start processing refund
             processApprovedRefund(refund, request.getRefundTransId());
@@ -137,7 +136,7 @@ public class RefundService {
             notificationService.createNotification(
                     refund.getUser().getUserId(),
                     com.example.buddyfinder_backend.entity.Notification.NotificationType.SYSTEM,
-                    "Refund Approved ✅",
+                    "Refund Approved",
                     "Your refund request has been approved. Processing refund of $" + refund.getOriginalAmount(),
                     refundId,
                     "REFUND"
@@ -149,13 +148,13 @@ public class RefundService {
             refund.setProcessedBy(admin);
             refund.setAdminNotes(request.getAdminNotes());
 
-            log.info("❌ Refund {} rejected by admin {}", refundId, adminId);
+            log.info("Refund {} rejected by admin {}", refundId, adminId);
 
             // Notify user
             notificationService.createNotification(
                     refund.getUser().getUserId(),
                     com.example.buddyfinder_backend.entity.Notification.NotificationType.SYSTEM,
-                    "Refund Rejected ❌",
+                    "Refund Rejected",
                     "Your refund request has been rejected. Reason: " + request.getAdminNotes(),
                     refundId,
                     "REFUND"
@@ -188,7 +187,7 @@ public class RefundService {
             refund.setCompletedAt(LocalDateTime.now());
             refundRepository.save(refund);
 
-            log.info("💸 Refund {} completed successfully", refund.getRefundId());
+            log.info("Refund {} completed successfully", refund.getRefundId());
 
             // Notify user
             notificationService.createNotification(
@@ -201,7 +200,7 @@ public class RefundService {
             );
 
         } catch (Exception e) {
-            log.error("❌ Failed to process refund {}: {}", refund.getRefundId(), e.getMessage());
+            log.error("Failed to process refund {}: {}", refund.getRefundId(), e.getMessage());
             refund.setStatus(Refund.RefundStatus.UNDER_REVIEW);
             refund.setAdminNotes("Failed to process: " + e.getMessage());
             refundRepository.save(refund);
@@ -220,7 +219,7 @@ public class RefundService {
             Thread.currentThread().interrupt();
         }
 
-        log.info("🔄 Simulated refund processed for transaction: {}", refund.getOriginalTransId());
+        log.info("Simulated refund processed for transaction: {}", refund.getOriginalTransId());
     }
 
     /**
@@ -245,7 +244,7 @@ public class RefundService {
         refund.setStatus(Refund.RefundStatus.CANCELLED);
         Refund updated = refundRepository.save(refund);
 
-        log.info("🚫 Refund {} cancelled by user {}", refundId, userId);
+        log.info("Refund {} cancelled by user {}", refundId, userId);
 
         return mapToResponse(updated);
     }
