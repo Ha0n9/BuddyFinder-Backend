@@ -56,6 +56,7 @@ public class AuthService {
                 .isActive(true)
                 .isVerified(false)
                 .isAdmin(false)  // New users are not admin by default
+                .isSuperAdmin(false)
                 .build();
 
         User savedUser = userRepository.save(user);

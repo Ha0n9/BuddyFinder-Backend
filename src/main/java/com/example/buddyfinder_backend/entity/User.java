@@ -75,17 +75,21 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime lastLogin;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean isActive = true;
 
     private LocalDateTime banUntil;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean isVerified = false;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean isAdmin = false;
 
+    @Builder.Default
     @Column(nullable = false, columnDefinition = "boolean default false")
     private Boolean isSuperAdmin = false;
 
