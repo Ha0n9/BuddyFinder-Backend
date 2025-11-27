@@ -11,7 +11,7 @@ public class RegisterRequest {
     private String name;
 
     @NotBlank(message = "Email is required")
-    @Pattern(regexp = "^(?=.*[A-Za-z])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", message = "Invalid email format")
+    @Pattern(regexp = "^(?!.*([-_.])\\1{1,})(?![-_.])[A-Za-z0-9][-A-Za-z0-9._%+-]{3,}@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", message = "Invalid email format")
     private String email;
 
     @NotBlank(message = "Password is required")

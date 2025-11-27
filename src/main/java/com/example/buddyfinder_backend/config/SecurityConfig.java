@@ -47,7 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/referral/invite").authenticated()
                         .requestMatchers("/api/referral/claim-reward").authenticated()
                         .requestMatchers("/api/group-chat/rooms/me").permitAll()
-                        // ✅ Allow WebSocket endpoints
+                        // Allow WebSocket endpoints
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/app/**").permitAll()
                         .requestMatchers("/topic/**").permitAll()
