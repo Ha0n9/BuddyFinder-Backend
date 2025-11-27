@@ -8,4 +8,6 @@ import java.util.List;
 public interface GroupMessageRepository extends JpaRepository<GroupMessage, Long> {
 
     List<GroupMessage> findByChatRoom_IdOrderByTimestampAsc(Long roomId);
+
+    void deleteByChatRoom_Id(Long roomId);
 }

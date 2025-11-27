@@ -3,10 +3,11 @@ package com.example.buddyfinder_backend.service;
 import com.example.buddyfinder_backend.entity.*;
 import com.example.buddyfinder_backend.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,6 +19,8 @@ public class ActivityService {
     private final UserRepository userRepository;
     private final ActivityParticipantRepository activityParticipantRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final GroupMessageRepository groupMessageRepository;
     private final GroupChatService groupChatService;  // <-- New service
 
     /**
@@ -128,10 +131,17 @@ public class ActivityService {
         activity.setCurrentCount(Math.max(0, currentCount - 1));
         activityRepository.save(activity);
 
-        // Auto leave group chat
-        chatRoomRepository.findByActivity_ActivityId(activityId).ifPresent(room ->
-                groupChatService.leaveRoom(room.getId(), userId)
-        );
+        // Auto leave group chat (only if still member to avoid rollback)
+        chatRoomRepository.findByActivity_ActivityId(activityId).ifPresent(room -> {
+            boolean isMember = chatRoomMemberRepository.existsByChatRoom_IdAndUser_UserId(room.getId(), userId);
+            if (isMember) {
+                try {
+                    groupChatService.leaveRoom(room.getId(), userId);
+                } catch (Exception e) {
+                    System.out.println("Unable to leave group chat: " + e.getMessage());
+                }
+            }
+        });
 
         return "You have left the activity.";
     }
@@ -149,5 +159,23 @@ public class ActivityService {
     public Activity getActivity(Long id) {
         return activityRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Activity not found"));
+    }
+
+    @Transactional
+    public void deleteActivity(Long activityId, Long requesterId) {
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Activity not found"));
+
+        if (!activity.getCreator().getUserId().equals(requesterId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the creator can delete this activity.");
+        }
+
+        chatRoomRepository.findByActivity_ActivityId(activityId).ifPresent(room -> {
+            groupMessageRepository.deleteByChatRoom_Id(room.getId());
+            chatRoomMemberRepository.deleteByChatRoom_Id(room.getId());
+            chatRoomRepository.delete(room);
+        });
+
+        activityRepository.delete(activity);
     }
 }

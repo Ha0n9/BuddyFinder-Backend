@@ -3,9 +3,11 @@ package com.example.buddyfinder_backend.service;
 import com.example.buddyfinder_backend.entity.*;
 import com.example.buddyfinder_backend.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -26,6 +28,9 @@ public class AdminService {
     private final NotificationService notificationService; // ADD THIS
     private final ReportService reportService;
     private final UserService userService;
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final GroupMessageRepository groupMessageRepository;
     private final PasswordEncoder passwordEncoder;
 
     public Map<String, Object> getDashboardStats() {
@@ -117,9 +122,23 @@ public class AdminService {
         return activityRepository.findAll();
     }
 
+    @Transactional
     public void deleteActivity(Long activityId, Long adminId) {
         verifyAdmin(adminId);
-        activityRepository.deleteById(activityId);
+
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Activity not found"));
+
+        deleteRelatedChatRoom(activityId);
+        activityRepository.delete(activity);
+    }
+
+    private void deleteRelatedChatRoom(Long activityId) {
+        chatRoomRepository.findByActivity_ActivityId(activityId).ifPresent(room -> {
+            groupMessageRepository.deleteByChatRoom_Id(room.getId());
+            chatRoomMemberRepository.deleteByChatRoom_Id(room.getId());
+            chatRoomRepository.delete(room);
+        });
     }
 
     public List<Map<String, Object>> getAllRatings(Long adminId) {
@@ -302,7 +321,7 @@ public class AdminService {
         User admin = userRepository.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
 
-        if (!Boolean.TRUE.equals(admin.getIsAdmin())) {
+        if (!Boolean.TRUE.equals(admin.getIsAdmin()) && !Boolean.TRUE.equals(admin.getIsSuperAdmin())) {
             throw new RuntimeException("Unauthorized: Not an admin");
         }
 

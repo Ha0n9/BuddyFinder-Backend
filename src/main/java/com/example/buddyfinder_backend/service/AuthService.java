@@ -42,9 +42,19 @@ public class AuthService {
         String sanitizedAvailability = SanitizeUtil.sanitize(request.getAvailability());
 
         // Create new user
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+        if (normalizedEmail.endsWith("@example.com")) {
+            throw new IllegalArgumentException("Registration with @example.com addresses is not allowed");
+        }
+
+        String localPart = normalizedEmail.substring(0, normalizedEmail.indexOf('@'));
+        if (localPart.replaceAll("[^A-Za-z0-9]", "").isEmpty()) {
+            throw new IllegalArgumentException("Email must contain alphanumeric characters before the @");
+        }
+
         User user = User.builder()
                 .name(normalizedName)
-                .email(request.getEmail().trim().toLowerCase())
+                .email(normalizedEmail)
                 .password(passwordEncoder.encode(request.getPassword()))
                 .age(request.getAge())
                 .interests(sanitizedInterests)

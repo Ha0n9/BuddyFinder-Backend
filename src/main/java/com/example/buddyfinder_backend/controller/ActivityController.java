@@ -73,4 +73,13 @@ public class ActivityController {
     public List<Activity> getAll() {
         return activityService.getAllActivities();
     }
+
+    @DeleteMapping("/{activityId}")
+    public ResponseEntity<Map<String, String>> deleteActivity(
+            @RequestHeader("Authorization") String auth,
+            @PathVariable Long activityId) {
+        Long userId = extractUserId(auth);
+        activityService.deleteActivity(activityId, userId);
+        return ResponseEntity.ok(Map.of("message", "Activity deleted successfully"));
+    }
 }
