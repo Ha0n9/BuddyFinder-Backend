@@ -1,0 +1,2 @@
+To create super_admin account and user accounts for testing. PLEASE UNCOMMENT "DataSeeder.java" file first and then run the backend. After that, COMMENT "DataSeeder.java" and UNCOMMENT "SuperAdminInitializer.java" then run thee project backend once again.
+If you run the "SuperAdminInitializer.java" first, the "DataSeeder.java" may not working properly
